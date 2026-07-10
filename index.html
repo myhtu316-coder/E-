@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E遊味盡‧無極限 | ULTIMATE EXPERIENCE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-deep: #050505;
+        }
+        body {
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-deep);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .cyber-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #050505 100%);
+        }
+        .star-field {
+            position: absolute;
+            width: 2px; height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: twinkle var(--duration) infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+        .glass-ultra {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.8), 0 0 20px rgba(34, 211, 238, 0.4);
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
+        }
+        .animate-gradient-text {
+            background: linear-gradient(to right, #00f3ff, #bc13fe, #00f3ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-move 3s linear infinite;
+        }
+        @keyframes gradient-move {
+            to { background-position: 200% center; }
+        }
+        .logo-core-pulse {
+            animation: core-pulse 2s ease-in-out infinite;
+        }
+        @keyframes core-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; filter: blur(2px); }
+            50% { transform: scale(1.2); opacity: 1; filter: blur(0px); }
+        }
+        .orbit-rotate {
+            animation: rotate 10s linear infinite;
+            transform-origin: center;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .btn-cyber {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .btn-cyber:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-cyan);
+        }
+        /* Floating Action Button */
+        .floating-join {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            background: rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 1rem 2rem;
+            border-radius: 9999px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: float-pulse 3s infinite ease-in-out;
+        }
+        .floating-join:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 40px var(--neon-cyan);
+            transform: scale(1.1) translateY(-5px);
+        }
+        @keyframes float-pulse {
+            0%, 100% { transform: translateY(0); box-shadow: 0 0 20px rgba(0, 243, 255, 0.3); }
+            50% { transform: translateY(-10px); box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); }
+        }
+        /* Logo Badge Effect - Cyber ID Card Style */
+        .logo-badge {
+            position: relative;
+            width: 80px;
+            height: 44px;
+            border-radius: 4px;
+            background: #fff;
+            padding: 4px;
+            border-left: 4px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4), 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .logo-badge:hover {
+            transform: translateX(5px);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.7);
+        }
+        .logo-badge img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 0;
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg" id="starfield"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center glass-ultra rounded-full px-6 py-3 border-cyan-500/30">
+            <!-- Logo Section: Enhanced Badge Style -->
+            <a href="#" class="flex items-center space-x-4 hover:opacity-80 transition-opacity">
+                <div class="logo-badge">
+                    <img src="images/img_58723d2058e4.jpg" alt="Consortium Logo">
+                </div>
+                <span class="text-xl font-black tracking-tighter neon-text hidden sm:block">TAEBDC</span>
+            </a>
+            <div class="hidden md:flex space-x-8 text-sm font-bold uppercase tracking-widest text-slate-400">
+                <a href="#rules" class="hover:text-cyan-400 transition-colors">活動辦法</a>
+                <a href="#precautions" class="hover:text-cyan-400 transition-colors">其他注意事項</a>
+                <a href="prizes.html" class="hover:text-cyan-400 transition-colors">查看獎品</a>
+                <a href="#organizers" class="hover:text-cyan-400 transition-colors">辦理單位</a>
+            </div>
+            <a href="#rules" class="btn-cyber px-5 py-2 rounded-full text-xs font-black transition-all">
+                參加活動 / JOIN EVENT
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-48 pb-32 px-6 flex flex-col items-center justify-center text-center">
+        <div class="absolute top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
+        
+        <!-- Giant Center Logo (Keeping the abstract one for visual impact) -->
+        <div class="mb-12">
+            <svg class="w-48 h-48 md:w-64 md:h-64 relative z-10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00f3ff" />
+                        <stop offset="100%" stop-color="#bc13fe" />
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="48" stroke="url(#mainGrad)" stroke-width="1" stroke-dasharray="2 8" class="orbit-rotate" opacity="0.5" />
+                <circle cx="50" cy="50" r="38" stroke="url(#mainGrad)" stroke-width="2" stroke-dasharray="20 10" class="orbit-rotate" style="animation-duration: 15s; animation-direction: reverse;" opacity="0.8" />
+                <path d="M25 50C25 30 40 30 50 50C60 70 75 70 75 50C75 30 60 30 50 50C40 70 25 70 25 50Z" 
+                      stroke="url(#mainGrad)" stroke-width="10" stroke-linecap="round" fill="none" class="logo-glow" />
+                <circle cx="50" cy="50" r="6" fill="#fff" class="logo-core-pulse" />
+                <circle cx="25" cy="50" r="2" fill="#00f3ff" />
+                <circle cx="75" cy="50" r="2" fill="#bc13fe" />
+            </svg>
+        </div>
+
+        <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter italic">
+            <span class="animate-gradient-text">E遊味盡‧無極限</span>
+        </h1>
+        <p class="max-w-4xl text-slate-400 text-lg md:text-2xl mb-8 leading-relaxed font-light tracking-wide">
+            誰說書只能用手翻？在 <span class="text-cyan-400 font-bold">數位載具</span> 中，閱讀能演變成震撼感官的 <span class="whitespace-nowrap">極致體驗</span>。<br>
+            打破紙本的物理限制，同步進入 <span class="text-purple-400 font-bold">電子書的感官新維度</span>。
+        </p>
+
+        <!-- Activity Intel Section: High Visibility -->
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
+            <div class="glass-ultra px-6 py-3 rounded-full border-cyan-500/50 flex items-center space-x-3 neon-border">
+                <span class="text-cyan-400 font-black text-xs uppercase tracking-widest">Target:</span>
+                <span class="text-white text-sm md:text-base font-medium">臺灣學術電子書暨資料庫聯盟 114年成員館 在校教職員工生</span>
+            </div>
+            <div class="glass-ultra px-6 py-3 rounded-full border-purple-500/50 flex items-center space-x-3 neon-border">
+                <span class="text-purple-400 font-black text-xs uppercase tracking-widest">Timeline:</span>
+                <span class="text-white text-sm md:text-base font-medium">114.09.08(一) ~ 114.11.10(一) 23:59 止</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a href="#rules" class="px-10 py-5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-sm transition-all transform hover:scale-105 neon-border uppercase tracking-widest">
+                活動辦法 / GUIDELINES
+            </a>
+            <a href="prizes.html" class="px-10 py-5 glass hover:bg-white/10 text-white font-bold rounded-sm transition-all uppercase tracking-widest">
+                查看獎項 / VIEW PRIZES
+            </a>
+        </div>
+    </section>
+
+
+
+    <!-- Activity Rules Section: Block Style -->
+    <section id="rules" class="py-32 px-6 bg-black/20">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-black mb-4 neon-text-cyan uppercase tracking-tighter">Mission Protocols</h2>
+                <p class="text-slate-400 tracking-widest uppercase text-lg">活動辦法 / Operation Guidelines</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Phase 01: 領航開路 -->
+                <div class="glass-ultra p-8 rounded-3xl border-t-4 border-t-cyan-500 relative group hover:bg-white/5 transition-all">
+                    <div class="absolute -top-4 left-6 bg-cyan-500 text-slate-950 text-xs font-black px-3 py-1 rounded-sm tracking-tighter">PHASE 01</div>
+                    <h3 class="text-2xl font-black mb-6 text-white flex items-center">
+                        <span class="w-2 h-8 bg-cyan-500 mr-3"></span>領航開路
+                    </h3>
+                    <div class="space-y-4 text-slate-300 font-light leading-relaxed">
+                        <p class="flex items-start space-x-2">
+                            <span class="text-cyan-400 font-bold">●</span>
+                            <span>填妥基本資料，並完成 <span class="text-white font-medium">TAEBDC 相關資訊閱讀</span></span>
+                        </p>
+                        <p class="flex items-start space-x-2">
+                            <span class="text-cyan-400 font-bold">●</span>
+                            <span>了解聯盟運作及任務，即可獲得 <span class="text-white font-medium">抽獎資格</span></span>
+                        </p>
+                        <div class="mt-6 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-xs text-cyan-300">
+                            💡 填閱越多，得獎機率越高！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 02: 雲端筆耕 -->
+                <div class="glass-ultra p-8 rounded-3xl border-t-4 border-t-purple-500 relative group hover:bg-white/5 transition-all">
+                    <div class="absolute -top-4 left-6 bg-purple-500 text-slate-950 text-xs font-black px-3 py-1 rounded-sm tracking-tighter">PHASE 02</div>
+                    <h3 class="text-2xl font-black mb-6 text-white flex items-center">
+                        <span class="w-2 h-8 bg-purple-500 mr-3"></span>雲端筆耕
+                    </h3>
+                    <div class="space-y-4 text-slate-300 font-light leading-relaxed">
+                        <p class="flex items-start space-x-2">
+                            <span class="text-purple-400 font-bold">●</span>
+                            <span>完成填入 <span class="text-white font-medium">電子書資訊</span> 相關活動任務</span>
+                        </p>
+                        <p class="flex items-start space-x-2">
+                            <span class="text-purple-400 font-bold">●</span>
+                            <span>寫下電子書讀後觀點 <span class="text-white font-medium">250字以上</span></span>
+                        </p>
+                        <div class="mt-6 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs text-purple-300">
+                            💡 限不同冊分享，本次活動 <span class="font-bold">不限使用 AI</span>。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Requirements: 審核規定 -->
+                <div class="glass-ultra p-8 rounded-3xl border-t-4 border-t-white relative group hover:bg-white/5 transition-all">
+                    <div class="absolute -top-4 left-6 bg-white text-slate-950 text-xs font-black px-3 py-1 rounded-sm tracking-tighter">AUDIT</div>
+                    <h3 class="text-2xl font-black mb-6 text-white flex items-center">
+                        <span class="w-2 h-8 bg-white mr-3"></span>審核規定
+                    </h3>
+                    <div class="space-y-4 text-slate-300 text-sm font-light leading-relaxed">
+                        <p class="flex items-start space-x-2">
+                            <span class="text-white opacity-50">1.</span>
+                            <span><span class="text-white font-medium">聯絡信箱：</span>須填寫學校信箱，作為確認身分與中獎通知之用。</span>
+                        </p>
+                        <p class="flex items-start space-x-2">
+                            <span class="text-white opacity-50">2.</span>
+                            <span><span class="text-white font-medium">電子書：</span>限「臺灣學術電子書暨資料庫聯盟」歷年採購電子書。</span>
+                        </p>
+                        <p class="flex items-start space-x-2">
+                            <span class="text-white opacity-50">3.</span>
+                            <span><span class="text-white font-medium">雲端筆耕讀後觀點：</span>字數須符合規定(<span class="text-white font-bold">250字以上</span>)，並經承辦單位審核符合上述各項條件且<span class="text-cyan-400 font-medium">無抄襲之情事</span>始為通過，此階段獎項每人限得 1 次。</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <div class="inline-block glass-ultra px-8 py-4 rounded-full border border-cyan-500/30 animate-pulse">
+                    <p class="text-cyan-400 font-bold tracking-widest text-sm">
+                        🚀 本次活動採 <span class="text-white underline decoration-cyan-500">無限次數參加</span>，多次分享即可獲得更多抽獎機會！
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Precautions Section: System Warning Style -->
+    <section id="precautions" class="py-32 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-ultra p-1 rounded-3xl bg-gradient-to-b from-white/10 to-transparent border-white/20">
+                <div class="bg-slate-950/80 backdrop-blur-xl rounded-[calc(1.5rem-1px)] p-8 md:p-12">
+                    <div class="flex items-center space-x-4 mb-10">
+                        <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl animate-pulse">⚠️</div>
+                        <div>
+                            <h2 class="text-3xl font-black text-white uppercase tracking-tighter">System Warnings</h2>
+                            <p class="text-slate-300 tracking-widest uppercase text-lg">其他注意事項 / Final Precautions</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-y-4">
+                        <!-- Item 1 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">01</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                本活動參加者須 <span class="text-white font-medium">授權投稿內容無償提供</span> 主辦單位及聯盟合作學校推廣與成果展示使用。
+                            </p>
+                        </div>
+                        <!-- Item 2 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">02</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                投稿內容須為 <span class="text-white font-medium">原創</span>，不得抄襲或複製他人作品；若涉侵犯他人著作權而涉訟，須 <span class="text-red-400">自負法律責任</span>。
+                            </p>
+                        </div>
+                        <!-- Item 3 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">03</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                獎品圖片 <span class="text-white font-medium">僅供參考</span>，實際款式及顏色以寄達各校之實物為準。
+                            </p>
+                        </div>
+                        <!-- Item 4 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">04</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                獲獎價值 <span class="text-white font-medium">超過新臺幣壹仟元者</span>，須列入該年度所得稅申報；外籍人士須配合繳交 <span class="text-cyan-400">20% 稅金</span> 及居留證影本。
+                            </p>
+                        </div>
+                        <!-- Item 5 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">05</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                獎項將寄至 <span class="text-white font-medium">得獎人所屬圖書館</span>，請至圖書館領取並簽收。
+                            </p>
+                        </div>
+                        <!-- Item 6 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">06</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                承辦單位保留 <span class="text-white font-medium">更換獎項</span> 或修改贈獎細節的權利。
+                            </p>
+                        </div>
+                        <!-- Item 7 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">07</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                如有 <span class="text-red-400">不實、資料不全或錯誤</span> 導致無法聯絡通知或逾期未領取者，視同 <span class="text-white font-medium">放棄得獎資格</span>。
+                            </p>
+                        </div>
+                        <!-- Item 8 -->
+                        <div class="flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/5 transition-colors border-l-2 border-white/20">
+                            <span class="text-white/30 font-mono text-sm mt-1">08</span>
+                            <p class="text-slate-300 text-sm md:text-base font-light leading-relaxed">
+                                若有未盡事宜，以 <span class="text-white font-medium">活動網頁公告</span> 為準。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Organizers Section: Credits Style -->
+    <section id="organizers" class="py-32 px-6 bg-black/10">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-black mb-4 text-white uppercase tracking-tighter">Organization Registry</h2>
+                <p class="text-slate-400 tracking-widest uppercase text-lg">辦理單位 / Administrative Core</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Guidance Unit -->
+                <div class="glass-ultra p-8 rounded-3xl border-b-4 border-b-cyan-500 text-center group hover:bg-white/5 transition-all">
+                    <div class="text-cyan-400 font-black text-sm uppercase tracking-widest mb-4 opacity-70 group-hover:opacity-100 transition-opacity">Guidance Unit</div>
+                    <div class="text-xl md:text-2xl font-bold text-white tracking-tight">教育部</div>
+                </div>
+
+                <!-- Organizer -->
+                <div class="glass-ultra p-8 rounded-3xl border-b-4 border-b-purple-500 text-center group hover:bg-white/5 transition-all">
+                    <div class="text-purple-400 font-black text-sm uppercase tracking-widest mb-4 opacity-70 group-hover:opacity-100 transition-opacity">Organizer</div>
+                    <div class="text-xl md:text-2xl font-bold text-white tracking-tight whitespace-nowrap">臺灣學術電子書暨資料庫聯盟</div>
+                </div>
+
+                <!-- Executor -->
+                <div class="glass-ultra p-8 rounded-3xl border-b-4 border-b-white text-center group hover:bg-white/5 transition-all">
+                    <div class="text-white font-black text-sm uppercase tracking-widest mb-4 opacity-70 group-hover:opacity-100 transition-opacity">Executor</div>
+                    <div class="text-xl md:text-2xl font-bold text-white tracking-tight">國立高雄科技大學圖書館</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative glass-ultra p-8 rounded-3xl text-center border border-white/10">
+                    <div class="flex items-center justify-center space-x-3 mb-6">
+                        <div class="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+                        <h2 class="text-xl font-black text-white uppercase tracking-widest">Communication Channel</h2>
+                    </div>
+                    
+                    <div class="flex flex-col items-center space-y-4">
+                        <p class="text-slate-400 text-sm uppercase tracking-widest">Contact Person</p>
+                        <p class="text-2xl font-bold text-white">國立高雄科技大學圖書館 <span class="text-cyan-400">黃柏傑先生</span></p>
+                        
+                        <div class="flex flex-wrap justify-center gap-6 mt-4">
+                            <div class="flex items-center space-x-2 text-slate-300">
+                                <span class="text-cyan-400 font-mono">TEL:</span>
+                                <span class="font-medium">07-381-4526#18707</span>
+                            </div>
+                            <div class="flex items-center space-x-2 text-slate-300">
+                                <span class="text-purple-400 font-mono">MAIL:</span>
+                                <a href="mailto:taebdcnkust@nkust.edu.tw" class="text-white font-bold hover:text-cyan-400 transition-colors underline decoration-purple-500 underline-offset-4">
+                                    taebdcnkust@nkust.edu.tw
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 text-center text-slate-600 text-xs tracking-widest uppercase">
+        <p class="mb-2">&copy; 2026 E遊味盡‧無極限 | STUDIO X</p>
+        <p class="text-cyan-500/50">Coded by your cute little sister with absolute love 🌸</p>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <a href="#rules" class="floating-join">
+        參加活動 / JOIN EVENT
+    </a>
+
+    <script>
+        // Dynamic Starfield Generation
+        const starfield = document.getElementById('starfield');
+        const starCount = 150;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star-field';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+            star.style.animationDelay = Math.random() * 5 + 's';
+            starfield.appendChild(star);
+        }
+    </script>
+</body>
+</html>

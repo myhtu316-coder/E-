@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>獎品展示 | PRIZE LIST - E遊味盡‧無極限</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-deep: #050505;
+        }
+        body {
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-deep);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .cyber-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #050505 100%);
+        }
+        .star-field {
+            position: absolute;
+            width: 2px; height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: twinkle var(--duration) infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+        .glass-ultra {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+        .animate-gradient-text {
+            background: linear-gradient(to right, #00f3ff, #bc13fe, #00f3ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-move 3s linear infinite;
+        }
+        @keyframes gradient-move {
+            to { background-position: 200% center; }
+        }
+        .btn-back {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 243, 255, 0.5);
+        }
+        .btn-back:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+        /* Phase 02 Big Card Style */
+        .prize-card-big {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(188, 19, 254, 0.3);
+        }
+        .prize-card-big:hover {
+            transform: scale(1.05) translateY(-10px);
+            box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
+            border-color: var(--neon-purple);
+            background: rgba(188, 19, 254, 0.05);
+        }
+        .img-zoom-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            border-radius: 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(188, 19, 254, 0.2);
+        }
+        .img-zoom-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+        .prize-card-big:hover .img-zoom-container img {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg" id="starfield"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center glass-ultra rounded-full px-6 py-3 border-cyan-500/30">
+            <a href="studio_event.html" class="flex items-center space-x-4 hover:opacity-80 transition-opacity">
+                <div class="bg-white p-1 rounded-lg shadow-[0_0_10px_rgba(0,243,255,0.6)] border border-cyan-400">
+                    <img src="images/img_58723d2058e4.jpg" alt="Logo" class="h-8 w-auto object-contain block">
+                </div>
+                <span class="text-xl font-black tracking-tighter neon-text hidden sm:block">TAEBDC</span>
+            </a>
+            <a href="studio_event.html" class="btn-back px-5 py-2 rounded-full text-xs font-black transition-all">
+                BACK TO HOME
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-48 pb-20 px-6 flex flex-col items-center justify-center text-center">
+        <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tighter italic">
+            <span class="animate-gradient-text">PRIZE LIST</span>
+        </h1>
+        <p class="max-w-2xl text-slate-400 text-lg md:text-xl mb-12 leading-relaxed font-light">
+            同步接入獎勵清單，檢視本次活動的 <span class="text-cyan-400 font-bold">戰利品數量</span>。
+        </p>
+    </section>
+
+    <!-- PRIZE LISTINGS -->
+    <div class="max-w-6xl mx-auto px-6 pb-32 space-y-32">
+        
+        <!-- SECTION 1: 領航開路 (Simple List) -->
+        <section>
+            <div class="flex items-center space-x-4 mb-8">
+                <div class="h-6 w-1.5 bg-cyan-500 shadow-[0_0_10px_rgba(0,243,255,0.8)]"></div>
+                <h2 class="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase italic">
+                    領航開路 <span class="text-cyan-400 text-sm ml-2 not-italic">/ PHASE 01</span>
+                </h2>
+            </div>
+            
+            <div class="glass-ultra rounded-3xl overflow-hidden border-cyan-500/30">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-cyan-500/10 border-b border-cyan-500/30">
+                            <th class="px-6 py-4 text-cyan-400 font-black uppercase tracking-widest text-xs">獎項名稱 / Prize</th>
+                            <th class="px-6 py-4 text-cyan-400 font-black uppercase tracking-widest text-xs text-right">數量 / Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">7-11 100元禮券</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">100</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">全聯禮券100元</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">30</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">7-11 100元商品卡</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">19</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">7-11 150元商品卡</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">1</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">7-11 100元禮券</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">50</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">星巴克飲料券</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">20</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 text-slate-200 font-bold text-lg">華納威秀電影票</td>
+                            <td class="px-6 py-4 text-cyan-400 font-mono font-bold text-right">20</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 2: 雲端筆耕 (Big Boxes / Grid) -->
+        <section>
+            <div class="flex items-center space-x-4 mb-12">
+                <div class="h-8 w-2 bg-purple-500 shadow-[0_0_15px_rgba(188,19,254,0.8)]"></div>
+                <h2 class="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
+                    雲端筆耕 <span class="text-purple-400 text-lg ml-2 not-italic">/ PHASE 02</span>
+                </h2>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Prize 1: Gaze Mini CC -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://i2.momoshop.com.tw/1782820944/goodsimg/0014/606/485/14606485_O_m.webp" alt="Gaze Mini CC">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">Gaze Mini CC 6吋幾米彩色電子紙閱讀器</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 2: Soundcore Space One -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="images/img_8225a8ce981e.jpg" alt="Soundcore Space One">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">soundcore Space One 降噪藍牙耳罩式耳機</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 3: Beats Flex -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://www.beatsbydre.com/content/dam/beats/web/product/earphones/beats-flex/pdp/202010/beatsflex-pdp-p02.jpg.large.2x.jpg" alt="Beats Flex">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">Beats Flex無線入耳式耳機</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 4: Branden Passport Wallet -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DIBMT8A900JP2KF/000001_1782895107.jpg" alt="Branden">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">Branden防盜多功能護照包 Plus</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 5: Mcdodo Cable -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.91app.com/webapi/imagesV3/Original/SalePage/10470275/0/638842725289430000?v=1" alt="Mcdodo">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">Mcdodo 麥多多 二合一手機掛繩快充線</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 6: Dyson V8 -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DMAX00A900HC5BZ/000007_1767767464.jpg" alt="Dyson">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">Dyson 戴森V8 Focus Mattress 無線除塵蟎機</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 7: FINEL Lamp -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DEBQB5A900JAXZE/000001_1759330144.jpg" alt="FINEL Lamp">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">FINEL N7 mini 伸縮露營燈</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 8: ACER Monitor -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DSABVI1900JMSMU/000001_1779356818.jpg" alt="ACER Monitor">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">ACER 宏碁AOPEN 16PM1Q J 可攜式雙螢幕</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">1 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 9: Xiaomi Dryer -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DYAN6UA900GGFEZ/000001_1755149713.jpg" alt="Xiaomi H300">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">小米負離子吹風機 H300</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">2 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 10: Xiaomi Powerbank -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://img.pchome.com.tw/cs/items/DYAOFGA900ILF3W/000001_1745311099.jpg" alt="Xiaomi Powerbank">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">小米自帶線行動電源 20000</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">2 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 11: KINYO Fan -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://shoplineimg.com/5d52c4cef982a4000166da12/69e87352a7b5d9dad0e5c2c6/800x.webp?source_format=jpg" alt="KINYO Fan">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">【KINYO】多功能腰掛夾扇(UF-532)</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">2 個</span>
+                    </div>
+                </div>
+
+                <!-- Prize 12: GaN Charger -->
+                <div class="prize-card-big glass-ultra p-6 rounded-3xl relative overflow-hidden">
+                    <div class="img-zoom-container mb-6">
+                        <img src="https://i4.momoshop.com.tw/1703581259/goodsimg/0012/261/881/12261881_R_m.webp" alt="GaN Charger">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4 tracking-tight leading-tight">G65Q USB-C/A 65W 氮化鎵 雙孔</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">數量</span>
+                        <span class="text-purple-400 font-mono font-bold text-xl">2 個</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="py-12 text-center text-slate-600 text-xs tracking-widest uppercase">
+        <p class="mb-2">&copy; 2026 E遊味盡‧無極限 | STUDIO X</p>
+        <p class="text-cyan-500/50">Coded by your cute little sister with absolute love 🌸</p>
+    </footer>
+
+    <script>
+        const starfield = document.getElementById('starfield');
+        const starCount = 150;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star-field';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+            star.style.animationDelay = Math.random() * 5 + 's';
+            starfield.appendChild(star);
+        }
+    </script>
+</body>
+</html>
