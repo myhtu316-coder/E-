@@ -103,28 +103,16 @@
             100% { transform: perspective(120px) rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg); }
         }
         .logo-glow {
-            filter:
-                drop-shadow(0 0 6px #00f3ff)
-                drop-shadow(0 0 14px #00f3ff)
-                drop-shadow(0 0 26px #bc13fe)
-                drop-shadow(0 0 40px #bc13fe);
-            animation: logo-breathe 3.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 1.5px #00f3ff) drop-shadow(0 0 3px #bc13fe);
         }
-        @keyframes logo-breathe {
-            0%, 100% {
-                filter:
-                    drop-shadow(0 0 4px #00f3ff)
-                    drop-shadow(0 0 9px #00f3ff)
-                    drop-shadow(0 0 16px #bc13fe)
-                    drop-shadow(0 0 26px #bc13fe);
-            }
-            50% {
-                filter:
-                    drop-shadow(0 0 10px #00f3ff)
-                    drop-shadow(0 0 22px #00f3ff)
-                    drop-shadow(0 0 40px #bc13fe)
-                    drop-shadow(0 0 64px #bc13fe);
-            }
+        .logo-halo {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: halo-breathe 3.5s ease-in-out infinite;
+        }
+        @keyframes halo-breathe {
+            0%, 100% { opacity: 0.35; }
+            50%      { opacity: 0.6; }
         }
         .logo-orbit-tilt {
             transform-box: fill-box;
@@ -268,8 +256,15 @@
                         <stop offset="0%" stop-color="#bc13fe" />
                         <stop offset="100%" stop-color="#00f3ff" />
                     </linearGradient>
+                    <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#bc13fe" stop-opacity="0.55" />
+                        <stop offset="45%" stop-color="#00f3ff" stop-opacity="0.32" />
+                        <stop offset="100%" stop-color="#00f3ff" stop-opacity="0" />
+                    </radialGradient>
                 </defs>
-                <!-- 中間主體：去背品牌 logo，保留棕色原色 + 霓虹光暈發光 -->
+                <!-- 圓形柔光暈：貼著 logo 自然淡出成圓，不會變方塊 -->
+                <circle class="logo-halo" cx="50" cy="50" r="30" fill="url(#haloGrad)" />
+                <!-- 中間主體：去背品牌 logo，保留棕色原色 + 極淡霓虹描邊 -->
                 <image class="logo-glow" href="images/logo_center.png?v=2" xlink:href="images/logo_center.png?v=2" x="24" y="24" width="52" height="52" preserveAspectRatio="xMidYMid meet" />
                 <!-- 立體維度碎片：12個小星星繞書本一直轉，星星自己也在轉 -->
                 <g class="logo-orbit-tilt">
