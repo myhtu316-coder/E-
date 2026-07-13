@@ -102,6 +102,14 @@
             0%   { transform: perspective(120px) rotateX(0deg)    rotateY(0deg)    rotateZ(0deg); }
             100% { transform: perspective(120px) rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg); }
         }
+        .logo-glow {
+            filter: drop-shadow(0 0 5px #00f3ff) drop-shadow(0 0 10px #bc13fe);
+            animation: logo-breathe 4s ease-in-out infinite;
+        }
+        @keyframes logo-breathe {
+            0%, 100% { filter: drop-shadow(0 0 4px #00f3ff) drop-shadow(0 0 8px #bc13fe); }
+            50%      { filter: drop-shadow(0 0 11px #00f3ff) drop-shadow(0 0 22px #bc13fe); }
+        }
         .logo-orbit-tilt {
             transform-box: fill-box;
             transform-origin: center;
@@ -245,17 +253,8 @@
                         <stop offset="100%" stop-color="#00f3ff" />
                     </linearGradient>
                 </defs>
-                <!-- 書本：兩片書頁 V 字展開 -->
-                <g class="logo-glow">
-                    <path d="M50 28 L18 38 L18 74 L50 64 Z" fill="url(#mainGrad)" fill-opacity="0.18" stroke="url(#mainGrad)" stroke-width="2.5" stroke-linejoin="round" />
-                    <path d="M50 28 L82 38 L82 74 L50 64 Z" fill="url(#pageGrad)" fill-opacity="0.18" stroke="url(#pageGrad)" stroke-width="2.5" stroke-linejoin="round" />
-                    <path d="M50 28 L50 64" stroke="url(#mainGrad)" stroke-width="2.5" stroke-linecap="round" />
-                    <!-- 書頁線條 -->
-                    <path d="M26 44 L44 38" stroke="#00f3ff" stroke-width="1" stroke-opacity="0.7" stroke-linecap="round" />
-                    <path d="M26 52 L44 46" stroke="#00f3ff" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round" />
-                    <path d="M74 44 L56 38" stroke="#bc13fe" stroke-width="1" stroke-opacity="0.7" stroke-linecap="round" />
-                    <path d="M74 52 L56 46" stroke="#bc13fe" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round" />
-                </g>
+                <!-- 中間主體：去背品牌 logo，保留棕色原色 + 霓虹光暈發光 -->
+                <image class="logo-glow" href="images/logo_center.png" xlink:href="images/logo_center.png" x="24" y="24" width="52" height="52" preserveAspectRatio="xMidYMid meet" />
                 <!-- 立體維度碎片：12個小星星繞書本一直轉，星星自己也在轉 -->
                 <g class="logo-orbit-tilt">
                     <g class="logo-orbit-spin">
