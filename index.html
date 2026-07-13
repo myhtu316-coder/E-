@@ -100,21 +100,16 @@
         .logo-orbit-tilt {
             transform-box: fill-box;
             transform-origin: center;
-            transform: perspective(140px) rotateX(72deg) rotateZ(0deg);
-            animation: orbit-tilt 14s ease-in-out infinite alternate;
+            transform: perspective(160px) rotateX(70deg);
         }
         .logo-orbit-spin {
             transform-box: fill-box;
             transform-origin: center;
-            animation: orbit-spin 8s linear infinite;
+            animation: orbit-spin 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
         }
         @keyframes orbit-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        @keyframes orbit-tilt {
-            0% { transform: perspective(140px) rotateX(72deg) rotateZ(-14deg); }
-            100% { transform: perspective(140px) rotateX(72deg) rotateZ(14deg); }
+            from { transform: rotateZ(0deg) rotateY(0deg) rotateX(0deg); }
+            to   { transform: rotateZ(360deg) rotateY(360deg) rotateX(360deg); }
         }
         @keyframes rotate {
             from { transform: rotate(0deg); }
