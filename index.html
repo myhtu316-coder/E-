@@ -94,8 +94,13 @@
             50% { transform: scale(1.2); opacity: 1; filter: blur(0px); }
         }
         .orbit-rotate {
-            animation: rotate 10s linear infinite;
+            transform-box: fill-box;
             transform-origin: center;
+            animation: orbit-ring-spin 16s linear infinite;
+        }
+        @keyframes orbit-ring-spin {
+            0%   { transform: perspective(120px) rotateX(0deg)    rotateY(0deg)    rotateZ(0deg); }
+            100% { transform: perspective(120px) rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg); }
         }
         .logo-orbit-tilt {
             transform-box: fill-box;
