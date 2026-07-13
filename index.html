@@ -103,12 +103,28 @@
             100% { transform: perspective(120px) rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg); }
         }
         .logo-glow {
-            filter: drop-shadow(0 0 5px #00f3ff) drop-shadow(0 0 10px #bc13fe);
-            animation: logo-breathe 4s ease-in-out infinite;
+            filter:
+                drop-shadow(0 0 6px #00f3ff)
+                drop-shadow(0 0 14px #00f3ff)
+                drop-shadow(0 0 26px #bc13fe)
+                drop-shadow(0 0 40px #bc13fe);
+            animation: logo-breathe 3.5s ease-in-out infinite;
         }
         @keyframes logo-breathe {
-            0%, 100% { filter: drop-shadow(0 0 4px #00f3ff) drop-shadow(0 0 8px #bc13fe); }
-            50%      { filter: drop-shadow(0 0 11px #00f3ff) drop-shadow(0 0 22px #bc13fe); }
+            0%, 100% {
+                filter:
+                    drop-shadow(0 0 4px #00f3ff)
+                    drop-shadow(0 0 9px #00f3ff)
+                    drop-shadow(0 0 16px #bc13fe)
+                    drop-shadow(0 0 26px #bc13fe);
+            }
+            50% {
+                filter:
+                    drop-shadow(0 0 10px #00f3ff)
+                    drop-shadow(0 0 22px #00f3ff)
+                    drop-shadow(0 0 40px #bc13fe)
+                    drop-shadow(0 0 64px #bc13fe);
+            }
         }
         .logo-orbit-tilt {
             transform-box: fill-box;

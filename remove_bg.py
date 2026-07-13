@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageFilter
 import numpy as np
 
 src = "images/img_58723d2058e4.jpg"
@@ -6,29 +6,17 @@ out = "images/logo_center.png"
 
 im = Image.open(src).convert("RGBA")
 a = np.array(im)
-h, w = a.shape[:2]
-r, g, b, al = a[:, :, 0], a[:, :, 1], a[:, :, 2], a[:, :, 3]
+r, g, b = a[:, :, 0], a[:, :, 1], a[:, :, 2]
 
-# white mask: all channels > 245
-white = (r > 245) & (g > 245) & (b > 245)
+# 挖空所有接近白色像素（外圍白 + L/E 內部白），保留棕色主體
+white = (r > 238) & (g > 238) & (b > 238)
+alpha = np.where(white, 0, 255).astype(np.uint8)
 
-# flood fill from border to only remove OUTER white (keep internal L/E white)
-visited = np.zeros((h, w), dtype=bool)
-stack = [(0, 0), (0, w - 1), (h - 1, 0), (h - 1, w - 1)]
-while stack:
-    y, x = stack.pop()
-    if y < 0 or y >= h or x < 0 or x >= w:
-        continue
-    if visited[y, x] or not white[y, x]:
-        continue
-    visited[y, x] = True
-    stack.extend([(y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)])
-
-# also clear any fully-transparent leftover
-a[visited, 3] = 0
+# 只對 alpha 做柔化，RGB 保持原色 → 棕色主體銳利、邊緣半透明自然過渡
+alpha_img = Image.fromarray(alpha, "L").filter(ImageFilter.GaussianBlur(0.8))
+a[:, :, 3] = np.array(alpha_img)
 Image.fromarray(a).save(out)
 
-# report
 keep = int((a[:, :, 3] > 0).sum())
-print(f"kept pixels: {keep} ({keep/(h*w)*100:.1f}% of image)")
+print(f"kept pixels: {keep} ({keep/(a.shape[0]*a.shape[1])*100:.1f}%)")
 print("saved", out)
