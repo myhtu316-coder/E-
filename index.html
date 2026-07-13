@@ -101,15 +101,16 @@
             transform-box: fill-box;
             transform-origin: center;
             transform: perspective(200px) rotateX(60deg);
+            transform-style: preserve-3d;
         }
         .logo-orbit-spin {
             transform-box: fill-box;
             transform-origin: center;
-            animation: orbit-spin 12s linear infinite;
+            animation: orbit-spin 14s linear infinite;
         }
         @keyframes orbit-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            0%   { transform: rotateX(0deg)   rotateY(0deg)   rotateZ(0deg); }
+            100% { transform: rotateX(360deg) rotateY(180deg) rotateZ(360deg); }
         }
         .star-self {
             transform-box: fill-box;
