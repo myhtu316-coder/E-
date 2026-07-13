@@ -114,11 +114,11 @@
         .star-self {
             transform-box: fill-box;
             transform-origin: center;
-            animation: star-spin 3s linear infinite;
+            animation: star-spin 4s linear infinite;
         }
         @keyframes star-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            0%   { transform: perspective(60px) rotateX(0deg)   rotateY(0deg)   rotateZ(0deg); }
+            100% { transform: perspective(60px) rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
         }
         @keyframes rotate {
             from { transform: rotate(0deg); }
