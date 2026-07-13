@@ -58,6 +58,34 @@
         @keyframes gradient-move {
             to { background-position: 200% center; }
         }
+        .wuji-wrap {
+            display: inline-flex;
+            align-items: flex-end;
+            line-height: 1;
+        }
+        .wuji-char {
+            display: inline-block;
+            font-size: 1.35em;
+            background: linear-gradient(to bottom right, #00f3ff, #bc13fe, #ff2bd6, #00f3ff);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 18px rgba(188, 19, 254, 0.55);
+            animation: wuji-bounce 1.6s cubic-bezier(0.28, 0.84, 0.42, 1) infinite, wuji-shine 3s linear infinite;
+            animation-delay: calc(var(--i) * 0.18s), 0s;
+            transform-origin: bottom center;
+        }
+        @keyframes wuji-bounce {
+            0%, 100% { transform: translateY(0) scale(1, 1); }
+            30% { transform: translateY(-22px) scale(1.08, 0.92); }
+            55% { transform: translateY(0) scale(0.94, 1.06); }
+            75% { transform: translateY(-6px) scale(1.02, 0.98); }
+        }
+        @keyframes wuji-shine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
         .logo-core-pulse {
             animation: core-pulse 2s ease-in-out infinite;
         }
@@ -194,8 +222,8 @@
             </svg>
         </div>
 
-        <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter italic">
-            <span class="animate-gradient-text">E遊味盡‧無極限</span>
+        <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter italic leading-tight">
+            <span class="animate-gradient-text">E遊味盡‧</span><span class="wuji-wrap"><span class="wuji-char" style="--i:0">無</span><span class="wuji-char" style="--i:1">極</span><span class="wuji-char" style="--i:2">限</span></span>
         </h1>
         <p class="max-w-4xl text-slate-400 text-lg md:text-2xl mb-8 leading-relaxed font-light tracking-wide">
             誰說書只能用手翻？在 <span class="text-cyan-400 font-bold">數位載具</span> 中，閱讀能演變成震撼感官的 <span class="whitespace-nowrap">極致體驗</span>。<br>
