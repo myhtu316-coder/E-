@@ -197,6 +197,9 @@
       <label>滴定機流速（ml/h，預設 1；哥哥這罐 1ml/h）</label>
       <input id="laRate" type="number" inputmode="decimal" value="1" placeholder="例如 1">
 
+      <label>每天加幾 ml（含滴定總量，例如 17）</label>
+      <input id="laPerDay" type="number" inputmode="decimal" placeholder="例如 17">
+
       <button class="btn" id="laBtn">算要加幾 ml</button>
       <div class="out" id="laOut">輸入後按「算要加幾 ml」～</div>
       <div class="hint">📌 算法：降 X mg/L × 缸量 = 需移除 PO4 總重；鑭:磷酸根 = 1:1（莫耳比）。<br>
@@ -406,11 +409,17 @@ document.getElementById('laBtn').onclick=()=>{
   const dripTxt = (rate>0)
     ? `｜　滴定機 ${rate}ml/h 約 <b>${hrs.toFixed(1)}</b> 小時滴完（匀速、一天內搞定，最穩）`
     : '';
+  const perDay = parseFloat(document.getElementById('laPerDay').value);
+  let daysTxt='';
+  if(perDay>0){
+    const days = ml/perDay;
+    daysTxt = `<br><span class="hint">📅 若每天加 <b>${perDay}</b> ml，共需約 <b>${days.toFixed(1)}</b> 天、總母液 <b>${(perDay*days).toFixed(1)}</b> ml（實際每 2–3 天測一次，到了就收手，別硬打到 0）。</span>`;
+  }
   out.innerHTML=
     `缸 <b>${V}</b> L，降 PO4 <b>${drop}</b> mg/L<br>`+
     `需移除 PO4 ≈ <b>${(po4g/1000).toFixed(3)}</b> g　｜　需鑭金屬 ≈ <b>${laMass.toFixed(3)}</b> g<br>`+
     `母液（${isHept?'七水合':'無水'}，濃度 ${conc} g/L）需 <b style="font-size:20px;color:var(--green)">${ml.toFixed(1)}</b> ml`+
-    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。${dripTxt}</span>`;
+    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。${dripTxt}</span>${daysTxt}`;
 };
 
 /* ===== 數據紀錄 ===== */
