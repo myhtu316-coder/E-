@@ -54,7 +54,8 @@
   th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
   th{color:var(--cyan);font-weight:700}
   .logitem{padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:13px}
-  .del{float:right;color:var(--pink);font-size:12px;cursor:pointer;font-weight:700}
+  .del{float:right;color:var(--pink);font-size:12px;cursor:pointer;font-weight:700;margin-left:8px}
+  .edit{float:right;color:var(--cyan);font-size:12px;cursor:pointer;font-weight:700}
   .tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:999px;
     background:rgba(255,95,162,.15);color:var(--pink);font-weight:700;margin-left:6px}
   footer{text-align:center;color:var(--dim);font-size:11px;padding:20px 0}
@@ -251,6 +252,7 @@
       <label>備註</label>
       <input id="lNote" type="text" placeholder="例如 換水40L / 加鹽調比重">
       <button class="btn" id="logBtn">存一筆</button>
+      <button class="btn ghost" id="logCancel" style="display:none;margin-top:8px">取消編輯</button>
       <div class="hint">⚠️ PO4 等數值一律記「換水前（BEFORE）」測量的，跟哥哥習慣一致。</div>
     </div>
 
@@ -506,9 +508,9 @@ const KEY='reef_log_v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
 function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
 document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+let editIdx=null;  // 編輯中筆數索引（null=新增模式）
 document.getElementById('logBtn').onclick=()=>{
-  const a=load();
-  a.unshift({
+  const rec={
     d:document.getElementById('lDate').value,
     temp:document.getElementById('lTemp').value,
     kh:document.getElementById('lKH').value,
@@ -518,8 +520,25 @@ document.getElementById('logBtn').onclick=()=>{
     po4:document.getElementById('lPO4').value,
     sg:document.getElementById('lSG').value,
     note:document.getElementById('lNote').value
-  });
+  };
+  const a=load();
+  if(editIdx!==null){
+    // 編輯模式：直接覆蓋原筆
+    a[editIdx]=rec;
+    editIdx=null;
+    document.getElementById('logBtn').textContent='存一筆';
+    document.getElementById('logCancel').style.display='none';
+  }else{
+    a.unshift(rec);
+  }
   save(a);renderLog();
+  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+};
+document.getElementById('logCancel').onclick=()=>{
+  editIdx=null;
+  document.getElementById('logBtn').textContent='存一筆';
+  document.getElementById('logCancel').style.display='none';
   ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
 };
@@ -530,10 +549,27 @@ function renderLog(){
     const cells=[['KH',r.kh],['Ca',r.ca],['Mg',r.mg],['NO3',r.no3],['PO4',r.po4],['sg',r.sg],['°C',r.temp],['La',r.la],['Vodka',r.vodka]]
       .filter(c=>c[1]).map(c=>`${c[0]}:${c[1]}`).join(' ｜ ');
     return `<div class="logitem"><span class="del" data-i="${i}">刪除</span>`+
+      `<span class="edit" data-i="${i}">編輯</span>`+
       `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
   }).join('');
   box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{
     const arr=load();arr.splice(+b.dataset.i,1);save(arr);renderLog();
+  });
+  box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>{
+    const arr=load();const r=arr[+b.dataset.i];if(!r)return;
+    editIdx=+b.dataset.i;
+    document.getElementById('lDate').value=r.d||'';
+    document.getElementById('lTemp').value=r.temp||'';
+    document.getElementById('lKH').value=r.kh||'';
+    document.getElementById('lCa').value=r.ca||'';
+    document.getElementById('lMg').value=r.mg||'';
+    document.getElementById('lNO3').value=r.no3||'';
+    document.getElementById('lPO4').value=r.po4||'';
+    document.getElementById('lSG').value=r.sg||'';
+    document.getElementById('lNote').value=r.note||'';
+    document.getElementById('logBtn').textContent='更新這筆';
+    document.getElementById('logCancel').style.display='inline-block';
+    document.getElementById('lDate').scrollIntoView({behavior:'smooth',block:'center'});
   });
 }
 document.getElementById('expBtn').onclick=()=>{
