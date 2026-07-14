@@ -203,7 +203,7 @@
       <label>母液濃度（每 1000ml 含幾克固體）</label>
       <input id="laConc" type="number" inputmode="decimal" placeholder="哥哥這罐 4:1000 → 填 4">
 
-      <label>滴定機流速（ml/h，預設 1；哥哥這罐 1ml/h）</label>
+      <label>滴定機流速（每小時幾 ml；哥哥這罐 1ml/h）</label>
       <input id="laRate" type="number" inputmode="decimal" value="1" placeholder="例如 1">
 
       <label>每天加幾 ml（含滴定總量，例如 17）</label>
@@ -430,11 +430,16 @@ document.getElementById('laBtn').onclick=()=>{
 
   // 分次 / 滴定建議
   const per = ml/3;
-  const hrs = ml/rate;
-  const dripTxt = (rate>0)
-    ? `｜　滴定機 ${rate}ml/h 約 <b>${hrs.toFixed(1)}</b> 小時滴完（匀速、一天內搞定，最穩）`
-    : '';
   const perDay = parseFloat(document.getElementById('laPerDay').value);
+  // 滴定：每天機器需跑幾小時 = 每日劑量 ÷ 流速
+  let dripTxt='';
+  if(rate>0 && perDay>0){
+    const runH = perDay/rate;
+    dripTxt = `｜　滴定機 ${rate}ml/h 每天跑 <b>${runH.toFixed(1)}</b> 小時即可滴完當日 ${perDay}ml（匀速最穩）`;
+  } else if(rate>0){
+    const hrs = ml/rate;
+    dripTxt = `｜　滴定機 ${rate}ml/h 約 <b>${hrs.toFixed(1)}</b> 小時滴完總量`;
+  }
   let daysTxt='';
   if(perDay>0){
     const days = ml/perDay;
