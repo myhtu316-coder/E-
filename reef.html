@@ -600,7 +600,7 @@ const NUM_FIELDS=[
   {id:'lCa',min:300,max:600,step:5,unit:'mg/L'},
   {id:'lMg',min:900,max:1800,step:10,unit:'mg/L'},
   {id:'lNO3',min:0,max:60,step:1,unit:'mg/L'},
-  {id:'lPO4',min:0,max:3,step:0.05,unit:'mg/L'},
+  {id:'lPO4',min:0,max:0.613,step:0.05,unit:'mg/L'},
   {id:'lSG',min:1.018,max:1.030,step:0.001,unit:''}
 ];
 function fmtNum(v){return (Math.round(v*1000)/1000).toString();}
@@ -800,7 +800,12 @@ async function doSync(){
   }catch(e){setStatus('❌ '+e.message,false);}
 }
 let _autoTimer=null;
-function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTimeout(_autoTimer);_autoTimer=setTimeout(doSync,1200);}
+let _pollTimer=null;
+let _syncing=false;
+function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTimeout(_autoTimer);_autoTimer=setTimeout(doSyncSafe,1200);}
+async function doSyncSafe(){if(_syncing)return;_syncing=true;try{await doSync();}finally{_syncing=false;}}
+function startAutoSync(){if(_pollTimer)return;_pollTimer=setInterval(()=>{if(localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();},30000);}
+function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
 
 // 同步 UI 連動
 (function initSyncUI(){
@@ -811,9 +816,11 @@ function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTim
   if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{await ghGet();setStatus('✅ 連線成功，倉庫可讀',true);}catch(e){setStatus('❌ '+e.message,false);}};
   const autoBtn=document.getElementById('autoSyncBtn');
   function refreshAuto(){if(!autoBtn)return;const on=localStorage.getItem(AUTO_KEY)==='1';autoBtn.textContent='自動同步：'+(on?'開':'關');autoBtn.classList.toggle('on',on);}
-  if(autoBtn)autoBtn.onclick=()=>{localStorage.setItem(AUTO_KEY,localStorage.getItem(AUTO_KEY)==='1'?'0':'1');refreshAuto();};
+  if(autoBtn)autoBtn.onclick=()=>{const on=localStorage.getItem(AUTO_KEY)==='1';localStorage.setItem(AUTO_KEY,on?'0':'1');refreshAuto();if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}else{stopAutoSync();}};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();});
   refreshAuto();
   const last=JSON.parse(localStorage.getItem(STATUS_KEY)||'null');if(last&&last.txt)setStatus(last.txt,last.ok);
+  if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}
 })();
 renderLog();
 </script>
