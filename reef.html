@@ -194,6 +194,9 @@
       <label>母液濃度（每公升含幾克固體）</label>
       <input id="laConc" type="number" inputmode="decimal" placeholder="哥哥這罐 4:1000 → 填 4">
 
+      <label>滴定機流速（ml/h，預設 1；哥哥這罐 1ml/h）</label>
+      <input id="laRate" type="number" inputmode="decimal" value="1" placeholder="例如 1">
+
       <button class="btn" id="laBtn">算要加幾 ml</button>
       <div class="out" id="laOut">輸入後按「算要加幾 ml」～</div>
       <div class="hint">📌 算法：降 X mg/L × 缸量 = 需移除 PO4 總重；鑭:磷酸根 = 1:1（莫耳比）。<br>
@@ -380,6 +383,7 @@ lT.onclick=()=>{laMode='target';lT.classList.add('on');lD.classList.remove('on')
 document.getElementById('laBtn').onclick=()=>{
   const V=parseFloat(document.getElementById('laVol').value);
   const conc=parseFloat(document.getElementById('laConc').value);
+  const rate=parseFloat(document.getElementById('laRate').value)||1;
   const isHept=document.getElementById('laType').value==='hept';
   const out=document.getElementById('laOut');
   if(!V||V<=0){out.textContent='請填缸總水量（公升）';return;}
@@ -396,13 +400,17 @@ document.getElementById('laBtn').onclick=()=>{
   const laInConc = isHept ? conc*0.374 : conc*0.566;    // 每公升母液含鑭金屬 (g)
   const ml = laMass/laInConc*1000;       // 母液體積 (ml)
 
-  // 分次建議
+  // 分次 / 滴定建議
   const per = ml/3;
+  const hrs = ml/rate;
+  const dripTxt = (rate>0)
+    ? `｜　滴定機 ${rate}ml/h 約 <b>${hrs.toFixed(1)}</b> 小時滴完（匀速、一天內搞定，最穩）`
+    : '';
   out.innerHTML=
     `缸 <b>${V}</b> L，降 PO4 <b>${drop}</b> mg/L<br>`+
     `需移除 PO4 ≈ <b>${(po4g/1000).toFixed(3)}</b> g　｜　需鑭金屬 ≈ <b>${laMass.toFixed(3)}</b> g<br>`+
     `母液（${isHept?'七水合':'無水'}，濃度 ${conc} g/L）需 <b style="font-size:20px;color:var(--green)">${ml.toFixed(1)}</b> ml`+
-    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。</span>`;
+    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。${dripTxt}</span>`;
 };
 
 /* ===== 數據紀錄 ===== */
