@@ -106,7 +106,7 @@
 
       <button class="btn" id="mixBtn">算出來！</button>
       <div class="out" id="mixOut">輸入後按「算出來」～</div>
-      <div class="hint">📌 紅海鹽（你這罐）係數 <b>35.0</b> g/L，依哥哥實測標定 700g / 20L = sg 1.025。App 內可隨時改。</div>
+      <div class="hint">📌 紅海鹽（你這罐）係數 <b>~37.9</b> g/L（原廠建議 @35ppt）。泡完用機器實測 1.025–1.026 都正常，App 內可隨時改。</div>
     </div>
   </section>
 
@@ -153,15 +153,21 @@
       <select id="wcParam">
         <option value="PO4" data-unit="mg/L" data-ex="0.346">PO4（磷酸鹽）</option>
         <option value="NO3" data-unit="mg/L" data-ex="9">NO3（硝酸鹽）</option>
-        <option value="KH" data-unit="dKH" data-ex="8">KH（碳酸鹼度）</option>
-        <option value="Ca" data-unit="ppm" data-ex="420">Ca（鈣）</option>
-        <option value="Mg" data-unit="ppm" data-ex="1300">Mg（鎂）</option>
+        <option value="KH" data-unit="dKH" data-ex="8" data-salt="1">KH（碳酸鹼度）</option>
+        <option value="Ca" data-unit="ppm" data-ex="420" data-salt="1">Ca（鈣）</option>
+        <option value="Mg" data-unit="ppm" data-ex="1300" data-salt="1">Mg（鎂）</option>
       </select>
+
+      <div id="wcSaltBox" style="display:none">
+        <label>新水用哪牌海鹽？（自動帶入新水 Ca/Mg/KH 固定值）</label>
+        <select id="wcSalt"></select>
+        <div class="hint" id="wcSaltSrc"></div>
+      </div>
 
       <label id="wcBeforeLbl">換水前 PO4 濃度（缸內舊水，mg/L）</label>
       <input id="wcBefore" type="number" inputmode="decimal" placeholder="例如 0.346 (PO4 mg/L)">
 
-      <label id="wcNewLbl" for="wcNew">新水濃度（預設 0 = 純 RO/新泡海水）</label>
+      <label id="wcNewLbl" for="wcNew">新水濃度（預設 0）</label>
       <input id="wcNew" type="number" inputmode="decimal" placeholder="0">
 
       <button class="btn" id="wcBtn">推估！</button>
@@ -264,7 +270,7 @@
 <script>
 /* ===== 海鹽係數表（g/L @35ppt）===== */
 const SALTS = [
-  {id:'rss',  name:'Red Sea Salt（紅海鹽/藍桶）', gpl:35.0, src:'哥哥實測標定 700g/20L=sg1.025'},
+  {id:'rss',  name:'Red Sea Salt（紅海鹽/藍桶）', gpl:37.9, src:'原廠建議 ~38g/L @35ppt（哥哥實測泡完 1.025–1.026 均正常）'},
   {id:'rscp', name:'Red Sea Coral Pro（紅海珊瑚Pro）', gpl:38.2, src:'官方手冊'},
   {id:'io',   name:'Instant Ocean', gpl:35.0, src:'官方 FAQ'},
   {id:'rc',   name:'Reef Crystals', gpl:40.8, src:'社群常見值'},
@@ -273,6 +279,19 @@ const SALTS = [
   {id:'av',   name:'aquavitro Salinity', gpl:36.0, src:'官方'},
   {id:'bw',   name:'Brightwell NeoMarine', gpl:38.0, src:'社群常見值'},
 ];
+
+/* ===== 新水固定值表（海鹽泡好後的典型 Ca/Mg/KH @35ppt，原廠典型值）=====
+   PO4/NO3 海鹽本就≈0，不列入，換水推估時新水直接視為 0 */
+const NEWWATER = {
+  rss:  {Ca:440, Mg:1320, KH:8.0,  src:'Red Sea Salt 原廠典型值 @35ppt'},
+  rscp: {Ca:490, Mg:1400, KH:11.0, src:'Red Sea Coral Pro 原廠手冊 @35ppt'},
+  io:   {Ca:420, Mg:1320, KH:8.0,  src:'Instant Ocean 原廠典型值 @35ppt'},
+  rc:   {Ca:500, Mg:1450, KH:12.0, src:'Reef Crystals 原廠典型值 @35ppt'},
+  tmp:  {Ca:440, Mg:1300, KH:8.0,  src:'Tropic Marin Pro Reef 原廠典型值 @35ppt'},
+  rpm:  {Ca:480, Mg:1450, KH:11.0, src:'Fritz RPM 原廠典型值 @35ppt'},
+  av:   {Ca:450, Mg:1350, KH:9.0,  src:'aquavitro Salinity 原廠典型值 @35ppt'},
+  bw:   {Ca:450, Mg:1350, KH:9.0,  src:'Brightwell NeoMarine 原廠典型值 @35ppt'},
+};
 
 /* ===== tab 切換 ===== */
 const tabs=document.getElementById('tabs');
@@ -366,19 +385,49 @@ wL.onclick=()=>{wcMode='L';wL.classList.add('on');wP.classList.remove('on');
   document.getElementById('wcLBox').style.display='block';document.getElementById('wcPBox').style.display='none';};
 wP.onclick=()=>{wcMode='P';wP.classList.add('on');wL.classList.remove('on');
   document.getElementById('wcLBox').style.display='none';document.getElementById('wcPBox').style.display='block';};
-// 換水參數下拉：切換 label/placeholder/單位
+// 換水參數下拉：切換 label/placeholder/單位 + 海鹽新水聯動
 const wcParam=document.getElementById('wcParam');
 const wcBeforeLbl=document.getElementById('wcBeforeLbl');
 const wcBeforeInput=document.getElementById('wcBefore');
 const wcNewLbl=document.getElementById('wcNewLbl');
+const wcNewInput=document.getElementById('wcNew');
+const wcSaltBox=document.getElementById('wcSaltBox');
+const wcSalt=document.getElementById('wcSalt');
+const wcSaltSrc=document.getElementById('wcSaltSrc');
+// 填入海鹽下拉選項
+SALTS.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;wcSalt.appendChild(o);});
 function syncWcParam(){
   const o=wcParam.options[wcParam.selectedIndex];
   const name=o.value, unit=o.dataset.unit, ex=o.dataset.ex;
   wcBeforeLbl.textContent=`換水前 ${name} 濃度（缸內舊水，${unit}）`;
   wcBeforeInput.placeholder=`例如 ${ex} (${name} ${unit})`;
-  if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（預設 0 = 純 RO/新泡海水，${unit}）`;
+  if(o.dataset.salt==='1'){
+    // KH/Ca/Mg：新水濃度依海鹽固定值
+    wcSaltBox.style.display='block';
+    syncWcSalt();
+  }else{
+    // PO4/NO3：海鹽本就≈0，新水直接當 0
+    wcSaltBox.style.display='none';
+    wcNewInput.value='0'; wcNewInput.disabled=false;
+    wcNewInput.placeholder='0（海鹽不含 PO4/NO3）';
+    if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（海鹽≈0，${unit}）`;
+  }
 }
-wcParam.onchange=syncWcParam; syncWcParam();
+function syncWcSalt(){
+  const o=wcParam.options[wcParam.selectedIndex];
+  const name=o.value, unit=o.dataset.unit;
+  const sid=wcSalt.value;
+  const nw=NEWWATER[sid];
+  const val = nw ? nw[name] : '';
+  const src = nw ? nw.src : '';
+  wcNewInput.value = (val==='' ? '' : val);
+  wcNewInput.disabled=true; // 自動帶入，不讓手填避免誤改
+  if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（依 ${wcSalt.options[wcSalt.selectedIndex].textContent.split('（')[0]} 自動帶入：${val} ${unit}）`;
+  wcSaltSrc.textContent = src ? `📌 ${src}` : '';
+}
+wcParam.onchange=syncWcParam;
+wcSalt.onchange=syncWcSalt;
+syncWcParam();
 
 document.getElementById('wcBtn').onclick=()=>{
   const V=parseFloat(document.getElementById('wcVol').value);
