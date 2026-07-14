@@ -65,13 +65,14 @@
 <div class="wrap">
   <header>
     <h1>🌊 海水小幫手</h1>
-    <p>泡鹽換算・補比重・換水推估・數據紀錄　手機平板都能點</p>
+    <p>泡鹽換算・補比重・換水推估・氯化鑭劑量・數據紀錄　手機平板都能點</p>
   </header>
 
   <div class="tabs" id="tabs">
     <div class="tab on" data-t="mix">泡鹽換算</div>
     <div class="tab" data-t="sg">補比重</div>
     <div class="tab" data-t="wc">換水推估</div>
+    <div class="tab" data-t="la">氯化鑭</div>
     <div class="tab" data-t="log">數據紀錄</div>
   </div>
 
@@ -157,6 +158,46 @@
       <button class="btn" id="wcBtn">推估！</button>
       <div class="out" id="wcOut">輸入後按「推估」～</div>
       <div class="hint">📌 公式：換水後 = 換水前×(1−比例) + 新水×比例。例：350L 換 40L、PO4 換水前 0.346 → 約 0.307。</div>
+    </div>
+  </section>
+
+  <!-- 氯化鑭劑量 -->
+  <section id="la" class="tabpane" style="display:none">
+    <div class="card">
+      <h2>⚗️ 氯化鑭劑量計算</h2>
+
+      <label>缸總水量（公升）</label>
+      <input id="laVol" type="number" inputmode="decimal" placeholder="例如 350">
+
+      <div class="seg" style="margin-top:14px">
+        <button id="laModeD" class="on">用「想降多少 PO4」</button>
+        <button id="laModeT">用「目前 → 目標」</button>
+      </div>
+
+      <div id="laDBox">
+        <label>想降低的 PO4（mg/L）</label>
+        <input id="laDrop" type="number" inputmode="decimal" placeholder="例如 0.05">
+      </div>
+      <div id="laTBox" style="display:none">
+        <div class="row">
+          <div><label>目前 PO4 (mg/L)</label><input id="laBefore" type="number" inputmode="decimal" placeholder="例如 0.307"></div>
+          <div><label>目標 PO4 (mg/L)</label><input id="laTarget" type="number" inputmode="decimal" placeholder="例如 0.257"></div>
+        </div>
+      </div>
+
+      <label>母液型態</label>
+      <select id="laType">
+        <option value="hept">七水合氯化鑭 LaCl₃·7H₂O（粉劑常見）</option>
+        <option value="anhy">無水氯化鑭 LaCl₃</option>
+      </select>
+
+      <label>母液濃度（每公升含幾克固體）</label>
+      <input id="laConc" type="number" inputmode="decimal" placeholder="哥哥這罐 4:1000 → 填 4">
+
+      <button class="btn" id="laBtn">算要加幾 ml</button>
+      <div class="out" id="laOut">輸入後按「算要加幾 ml」～</div>
+      <div class="hint">📌 算法：降 X mg/L × 缸量 = 需移除 PO4 總重；鑭:磷酸根 = 1:1（莫耳比）。<br>
+      ⚠️ 這是<b>理論量</b>！實缸會被碳酸根等消耗、要多加一點；但鑭會沉積難清除，<b>請分 2–3 天、加到水流最強處，別一次倒完</b>，也別把 PO4 打到 0。</div>
     </div>
   </section>
 
@@ -327,6 +368,41 @@ document.getElementById('wcBtn').onclick=()=>{
   document.getElementById('wcOut').innerHTML=
     `換水比例 <b>${(f*100).toFixed(1)}%</b><br>`+
     `換水前 <b>${before}</b> → 換水後約 <b>${after.toFixed(4)}</b>`;
+};
+
+/* ===== 氯化鑭劑量 ===== */
+let laMode='drop';
+const lD=document.getElementById('laModeD'), lT=document.getElementById('laModeT');
+lD.onclick=()=>{laMode='drop';lD.classList.add('on');lT.classList.remove('on');
+  document.getElementById('laDBox').style.display='block';document.getElementById('laTBox').style.display='none';};
+lT.onclick=()=>{laMode='target';lT.classList.add('on');lD.classList.remove('on');
+  document.getElementById('laDBox').style.display='none';document.getElementById('laTBox').style.display='block';};
+document.getElementById('laBtn').onclick=()=>{
+  const V=parseFloat(document.getElementById('laVol').value);
+  const conc=parseFloat(document.getElementById('laConc').value);
+  const isHept=document.getElementById('laType').value==='hept';
+  const out=document.getElementById('laOut');
+  if(!V||V<=0){out.textContent='請填缸總水量（公升）';return;}
+  if(!conc||conc<=0){out.textContent='請填母液濃度（每公升幾克固體）';return;}
+  const drop = laMode==='drop'
+    ? parseFloat(document.getElementById('laDrop').value)
+    : (parseFloat(document.getElementById('laBefore').value)-parseFloat(document.getElementById('laTarget').value));
+  if(!drop||drop<=0){out.textContent='請填有效的降低幅度（需 > 0）';return;}
+
+  const po4g = drop * V;                 // 要移除的 PO4 總重 (mg)
+  const molPO4 = po4g/1000/94.97;        // 莫耳數
+  const molLa = molPO4;                  // 1:1
+  const laMass = molLa*138.905;         // 鑭金屬總重 (g)，與型態無關
+  const laInConc = isHept ? conc*0.374 : conc*0.566;    // 每公升母液含鑭金屬 (g)
+  const ml = laMass/laInConc*1000;       // 母液體積 (ml)
+
+  // 分次建議
+  const per = ml/3;
+  out.innerHTML=
+    `缸 <b>${V}</b> L，降 PO4 <b>${drop}</b> mg/L<br>`+
+    `需移除 PO4 ≈ <b>${(po4g/1000).toFixed(3)}</b> g　｜　需鑭金屬 ≈ <b>${laMass.toFixed(3)}</b> g<br>`+
+    `母液（${isHept?'七水合':'無水'}，濃度 ${conc} g/L）需 <b style="font-size:20px;color:var(--green)">${ml.toFixed(1)}</b> ml`+
+    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。</span>`;
 };
 
 /* ===== 數據紀錄 ===== */
