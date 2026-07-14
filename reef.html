@@ -239,9 +239,13 @@
     <div class="card">
       <h2>📋 水質數據紀錄</h2>
       <div class="row">
-        <div>
+        <div style="flex:1 1 100%">
           <label>日期</label>
-          <input id="lDate" type="date">
+          <div class="row" style="margin-top:4px;gap:6px">
+            <select id="lYear"></select>
+            <select id="lMonth"></select>
+            <select id="lDay"></select>
+          </div>
         </div>
         <div>
           <label>水溫 (°C)</label>
@@ -578,11 +582,21 @@ function newId(){return Date.now().toString(36)+Math.random().toString(36).slice
   a.forEach(r=>{if(!r.id){r.id=newId();ch=true}if(!r.mtime){r.mtime=Date.now();ch=true}});
   if(ch)save(a);
 })();
-document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+/* 日期：年/月/日 三下拉 */
+function pad2(n){return String(n).padStart(2,'0');}
+function fillYear(){const s=document.getElementById('lYear');const y0=2020,y1=new Date().getFullYear()+1;s.innerHTML='';for(let y=y1;y>=y0;y--)s.insertAdjacentHTML('beforeend','<option value="'+y+'">'+y+'年</option>');}
+function fillMonth(){const s=document.getElementById('lMonth');s.innerHTML='';for(let m=1;m<=12;m++)s.insertAdjacentHTML('beforeend','<option value="'+pad2(m)+'">'+m+'月</option>');}
+function fillDay(){const s=document.getElementById('lDay');const y=+document.getElementById('lYear').value;const m=+document.getElementById('lMonth').value;const dim=new Date(y,m,0).getDate();const cur=+s.value||1;s.innerHTML='';for(let d=1;d<=dim;d++)s.insertAdjacentHTML('beforeend','<option value="'+pad2(d)+'">'+d+'日</option>');s.value=pad2(cur>dim?dim:cur);}
+function getLDate(){return document.getElementById('lYear').value+'-'+document.getElementById('lMonth').value+'-'+document.getElementById('lDay').value;}
+function setLDate(str){if(!str){resetLDate();return;}const p=String(str).split('-');if(p.length<3){resetLDate();return;}document.getElementById('lYear').value=p[0];document.getElementById('lMonth').value=p[1];fillDay();document.getElementById('lDay').value=p[2];}
+function resetLDate(){const t=new Date();document.getElementById('lYear').value=t.getFullYear();document.getElementById('lMonth').value=pad2(t.getMonth()+1);fillDay();document.getElementById('lDay').value=pad2(t.getDate());}
+fillYear();fillMonth();fillDay();resetLDate();
+document.getElementById('lYear').onchange=fillDay;
+document.getElementById('lMonth').onchange=fillDay;
 let editIdx=null;  // 編輯中筆數索引（null=新增模式）
 document.getElementById('logBtn').onclick=()=>{
   const rec={
-    d:document.getElementById('lDate').value,
+    d:getLDate(),
     temp:document.getElementById('lTemp').value,
     kh:document.getElementById('lKH').value,
     ca:document.getElementById('lCa').value,
@@ -608,14 +622,14 @@ document.getElementById('logBtn').onclick=()=>{
   }
   save(a);renderLog();maybeAutoSync();
   ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+  resetLDate();
 };
 document.getElementById('logCancel').onclick=()=>{
   editIdx=null;
   document.getElementById('logBtn').textContent='存一筆';
   document.getElementById('logCancel').style.display='none';
   ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+  resetLDate();
 };
 function renderLog(){
   const a=load();const box=document.getElementById('logList');
@@ -635,7 +649,7 @@ function renderLog(){
   box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>{
     const arr=load();const r=arr[+b.dataset.i];if(!r)return;
     editIdx=+b.dataset.i;
-    document.getElementById('lDate').value=r.d||'';
+    setLDate(r.d||'');
     document.getElementById('lTemp').value=r.temp||'';
     document.getElementById('lKH').value=r.kh||'';
     document.getElementById('lCa').value=r.ca||'';
@@ -646,7 +660,7 @@ function renderLog(){
     document.getElementById('lNote').value=r.note||'';
     document.getElementById('logBtn').textContent='更新這筆';
     document.getElementById('logCancel').style.display='inline-block';
-    document.getElementById('lDate').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('lYear').scrollIntoView({behavior:'smooth',block:'center'});
   });
 }
 document.getElementById('expBtn').onclick=()=>{
