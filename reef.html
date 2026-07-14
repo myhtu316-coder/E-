@@ -83,7 +83,7 @@
       <select id="salt"></select>
       <div class="hint" id="saltSrc"></div>
 
-      <label>目標鹽度 <span id="pptVal">35</span> ppt（可調）</label>
+      <label>目標鹽度 <span id="pptVal">35</span> ppt（≈ sg <span id="sgVal">1.025</span>，可調）</label>
       <input id="ppt" type="range" min="30" max="40" step="0.5" value="35" style="padding:0">
 
       <label>自訂係數（g/L，留空用品牌預設）</label>
@@ -105,7 +105,7 @@
 
       <button class="btn" id="mixBtn">算出來！</button>
       <div class="out" id="mixOut">輸入後按「算出來」～</div>
-      <div class="hint">📌 紅海鹽（你這罐）係數 37.9 為社群常見值，請以桶身標示為準，App 內可隨時改。</div>
+      <div class="hint">📌 紅海鹽（你這罐）係數 <b>35.0</b> g/L，依哥哥實測標定 700g / 20L = sg 1.025。App 內可隨時改。</div>
     </div>
   </section>
 
@@ -195,6 +195,8 @@
     <div class="card">
       <h2>📜 紀錄列表（本機儲存）</h2>
       <button class="btn ghost" id="expBtn">匯出 CSV</button>
+      <button class="btn ghost" id="impBtn" style="margin-top:8px">匯入 CSV</button>
+      <input id="impFile" type="file" accept=".csv,text/csv" style="display:none">
       <button class="btn ghost" id="clrBtn" style="margin-top:8px">清空全部</button>
       <div id="logList"></div>
     </div>
@@ -206,7 +208,7 @@
 <script>
 /* ===== 海鹽係數表（g/L @35ppt）===== */
 const SALTS = [
-  {id:'rss',  name:'Red Sea Salt（紅海鹽/藍桶）', gpl:37.9, src:'社群常見值・待桶身確認'},
+  {id:'rss',  name:'Red Sea Salt（紅海鹽/藍桶）', gpl:35.0, src:'哥哥實測標定 700g/20L=sg1.025'},
   {id:'rscp', name:'Red Sea Coral Pro（紅海珊瑚Pro）', gpl:38.2, src:'官方手冊'},
   {id:'io',   name:'Instant Ocean', gpl:35.0, src:'官方 FAQ'},
   {id:'rc',   name:'Reef Crystals', gpl:40.8, src:'社群常見值'},
@@ -244,7 +246,10 @@ updSrc();
 
 /* ppt 滑桿 */
 const ppt=document.getElementById('ppt'), pptVal=document.getElementById('pptVal');
-ppt.addEventListener('input',()=>pptVal.textContent=ppt.value);
+ppt.addEventListener('input',()=>{
+  pptVal.textContent=ppt.value;
+  document.getElementById('sgVal').textContent=(1+(ppt.value/35)*0.025).toFixed(4);
+});
 
 /* 泡鹽 模式切換 */
 let mixMode='vol';
@@ -265,13 +270,15 @@ document.getElementById('mixBtn').onclick=()=>{
     const vol=parseFloat(document.getElementById('vol').value);
     if(!vol||vol<=0){out.textContent='請輸入水量（公升）';return;}
     const g=vol*coef*factor;
-    out.innerHTML=`目標 <b>${vol}</b> 公升、<b>${pptv}</b> ppt<br>需要海鹽約 <b>${g.toFixed(1)}</b> 克`+
+    const sgShow=(1+(pptv/35)*0.025).toFixed(4);
+    out.innerHTML=`目標 <b>${vol}</b> 公升、sg <b>${sgShow}</b>（${pptv} ppt）<br>需要海鹽約 <b>${g.toFixed(1)}</b> 克`+
       (cust?'（自訂係數）':'（'+s.name+'）');
   }else{
     const sg=parseFloat(document.getElementById('saltg').value);
     if(!sg||sg<=0){out.textContent='請輸入海鹽克數';return;}
     const vol=sg/(coef*factor);
-    out.innerHTML=`海鹽 <b>${sg}</b> 克、<b>${pptv}</b> ppt<br>可泡約 <b>${vol.toFixed(1)}</b> 公升`+
+    const sgShow=(1+(pptv/35)*0.025).toFixed(4);
+    out.innerHTML=`海鹽 <b>${sg}</b> 克、sg <b>${sgShow}</b>（${pptv} ppt）<br>可泡約 <b>${vol.toFixed(1)}</b> 公升`+
       (cust?'（自訂係數）':'（'+s.name+'）');
   }
 };
@@ -348,7 +355,7 @@ function renderLog(){
   const a=load();const box=document.getElementById('logList');
   if(!a.length){box.innerHTML='<div class="hint">還沒紀錄～</div>';return;}
   box.innerHTML=a.map((r,i)=>{
-    const cells=[['KH',r.kh],['Ca',r.ca],['Mg',r.mg],['NO3',r.no3],['PO4',r.po4],['sg',r.sg],['°C',r.temp]]
+    const cells=[['KH',r.kh],['Ca',r.ca],['Mg',r.mg],['NO3',r.no3],['PO4',r.po4],['sg',r.sg],['°C',r.temp],['La',r.la],['Vodka',r.vodka]]
       .filter(c=>c[1]).map(c=>`${c[0]}:${c[1]}`).join(' ｜ ');
     return `<div class="logitem"><span class="del" data-i="${i}">刪除</span>`+
       `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
@@ -368,6 +375,39 @@ document.getElementById('expBtn').onclick=()=>{
 };
 document.getElementById('clrBtn').onclick=()=>{
   if(confirm('確定清空全部紀錄？')){localStorage.removeItem(KEY);renderLog();}
+};
+
+/* 匯入 CSV（相容哥哥現有格式：date,time,kh,ca,mg,no3,po4,sg,la_ml,vodka_ml,note） */
+document.getElementById('impBtn').onclick=()=>document.getElementById('impFile').click();
+document.getElementById('impFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const lines=rd.result.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+    if(!lines.length){alert('檔案是空的');return;}
+    const head=lines[0].split(',').map(h=>h.trim());
+    const idx=k=>head.findIndex(h=>h.toLowerCase()===k);
+    const ci={date:idx('date'),time:idx('time'),kh:idx('kh'),ca:idx('ca'),mg:idx('mg'),
+      no3:idx('no3'),po4:idx('po4'),sg:idx('sg'),la:idx('la_ml'),vodka:idx('vodka_ml'),note:idx('note')};
+    const get=(row,k)=>ci[k]>=0?(row[ci[k]]||'').trim():'';
+    const rows=lines.slice(1).map(l=>l.split(','));
+    const imported=rows.map(row=>{
+      let d=get(row,'date');
+      const t=get(row,'time');
+      if(d && t) d=d+' '+t;       // 合併 date + time
+      return {d, temp:'', kh:get(row,'kh'), ca:get(row,'ca'), mg:get(row,'mg'),
+        no3:get(row,'no3'), po4:get(row,'po4'), sg:get(row,'sg'),
+        la:get(row,'la'), vodka:get(row,'vodka'), note:get(row,'note')};
+    }).filter(r=>r.d||r.kh||r.ca||r.mg||r.no3||r.po4||r.sg||r.note);
+    if(!imported.length){alert('沒有可匯入的資料列');return;}
+    if(!confirm(`要匯入 ${imported.length} 筆紀錄嗎？\n（會加到現有列表前面，不會刪掉原有資料）`))return;
+    const a=load();
+    imported.reverse().forEach(r=>a.unshift(r));   // 保持日期由新到舊
+    save(a);renderLog();
+    alert(`✅ 匯入 ${imported.length} 筆成功！`);
+  };
+  rd.readAsText(f,'utf-8');
+  e.target.value='';
 };
 renderLog();
 </script>
