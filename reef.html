@@ -42,6 +42,7 @@
   .btn.alt{background:linear-gradient(90deg,var(--purple),var(--pink));
     box-shadow:0 0 18px rgba(179,136,255,.45);color:#fff}
   .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);box-shadow:none}
+  .btn.on{background:linear-gradient(90deg,var(--green),var(--cyan));color:#04121f;box-shadow:0 0 18px rgba(61,255,176,.5)}
   .out{margin-top:14px;padding:14px;border-radius:12px;background:#08111f;
     border:1px dashed var(--line);font-size:15px;line-height:1.7}
   .out b{color:var(--green);font-size:18px}
@@ -273,6 +274,24 @@
       <input id="impFile" type="file" accept=".csv,text/csv" style="display:none">
       <button class="btn ghost" id="clrBtn" style="margin-top:8px">清空全部</button>
       <div id="logList"></div>
+    </div>
+
+    <div class="card">
+      <h2>☁️ 同步設定</h2>
+      <label>GitHub 個人存取權杖（PAT）</label>
+      <input id="syncToken" type="password" placeholder="貼上你的 classic PAT（需要 repo 權限）" autocomplete="off">
+      <div class="hint">🔐 建法：GitHub 網頁 → 右上頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token（勾 <b>repo</b>）→ 複製貼這裡。只存在你這台手機，不會寫進任何程式碼。</div>
+
+      <label style="margin-top:14px">同步狀態</label>
+      <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
+
+      <div class="row" style="margin-top:14px">
+        <button class="btn" id="syncNowBtn">立即同步</button>
+        <button class="btn ghost" id="syncTestBtn">測試連線</button>
+      </div>
+
+      <button class="btn ghost" id="autoSyncBtn" style="margin-top:14px">自動同步：關</button>
+      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到雲端私人倉庫 <b>myhtu316-coder/reef-sync</b>，換手機也不怕不見。</div>
     </div>
   </section>
 
@@ -552,6 +571,13 @@ document.getElementById('laBtn').onclick=()=>{
 const KEY='reef_log_v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
 function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+// 舊紀錄補上 id / mtime（每裝置只跑一次，之後 id 就穩定可跨裝置合併）
+(function migrate(){
+  const a=load();let ch=false;
+  a.forEach(r=>{if(!r.id){r.id=newId();ch=true}if(!r.mtime){r.mtime=Date.now();ch=true}});
+  if(ch)save(a);
+})();
 document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
 let editIdx=null;  // 編輯中筆數索引（null=新增模式）
 document.getElementById('logBtn').onclick=()=>{
@@ -568,15 +594,19 @@ document.getElementById('logBtn').onclick=()=>{
   };
   const a=load();
   if(editIdx!==null){
-    // 編輯模式：直接覆蓋原筆
+    // 編輯模式：保留原筆的 id / mtime，直接覆蓋
+    rec.id=a[editIdx].id||newId();
+    rec.mtime=a[editIdx].mtime||Date.now();
     a[editIdx]=rec;
     editIdx=null;
     document.getElementById('logBtn').textContent='存一筆';
     document.getElementById('logCancel').style.display='none';
   }else{
+    rec.id=newId();
+    rec.mtime=Date.now();
     a.unshift(rec);
   }
-  save(a);renderLog();
+  save(a);renderLog();maybeAutoSync();
   ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
 };
@@ -598,7 +628,9 @@ function renderLog(){
       `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
   }).join('');
   box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{
-    const arr=load();arr.splice(+b.dataset.i,1);save(arr);renderLog();
+    const arr=load();const removed=arr.splice(+b.dataset.i,1)[0];save(arr);
+    if(removed&&removed.id)addDeleted(removed.id);
+    renderLog();maybeAutoSync();
   });
   box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>{
     const arr=load();const r=arr[+b.dataset.i];if(!r)return;
@@ -627,7 +659,11 @@ document.getElementById('expBtn').onclick=()=>{
   a2.href=u;a2.download='reef_log.csv';a2.click();URL.revokeObjectURL(u);
 };
 document.getElementById('clrBtn').onclick=()=>{
-  if(confirm('確定清空全部紀錄？')){localStorage.removeItem(KEY);renderLog();}
+  if(confirm('確定清空全部紀錄？（會同步標記刪除，雲端也會一併清掉）')){
+    load().forEach(r=>{if(r&&r.id)addDeleted(r.id)});
+    localStorage.removeItem(KEY);renderLog();
+    if(getToken())doSync();
+  }
 };
 
 /* 匯入 CSV（相容哥哥現有格式：date,time,kh,ca,mg,no3,po4,sg,la_ml,vodka_ml,note） */
@@ -650,18 +686,87 @@ document.getElementById('impFile').onchange=e=>{
       if(d && t) d=d+' '+t;       // 合併 date + time
       return {d, temp:'', kh:get(row,'kh'), ca:get(row,'ca'), mg:get(row,'mg'),
         no3:get(row,'no3'), po4:get(row,'po4'), sg:get(row,'sg'),
-        la:get(row,'la'), vodka:get(row,'vodka'), note:get(row,'note')};
+        la:get(row,'la'), vodka:get(row,'vodka'), note:get(row,'note'),
+        id:newId(), mtime:Date.now()};
     }).filter(r=>r.d||r.kh||r.ca||r.mg||r.no3||r.po4||r.sg||r.note);
     if(!imported.length){alert('沒有可匯入的資料列');return;}
     if(!confirm(`要匯入 ${imported.length} 筆紀錄嗎？\n（會加到現有列表前面，不會刪掉原有資料）`))return;
     const a=load();
     imported.reverse().forEach(r=>a.unshift(r));   // 保持日期由新到舊
-    save(a);renderLog();
+    save(a);renderLog();maybeAutoSync();
     alert(`✅ 匯入 ${imported.length} 筆成功！`);
   };
   rd.readAsText(f,'utf-8');
   e.target.value='';
 };
+
+/* ===== 雲端同步（私人倉庫 + PAT，存在瀏覽器 localStorage）===== */
+const SYNC_REPO='myhtu316-coder/reef-sync';
+const SYNC_FILE='reef_log.json';
+const TOKEN_KEY='reef_sync_token';
+const DEL_KEY='reef_del_v1';
+const AUTO_KEY='reef_sync_auto';
+const STATUS_KEY='reef_sync_status';
+function getToken(){return localStorage.getItem(TOKEN_KEY)||''}
+function getDeleted(){try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]}}
+function addDeleted(id){const d=getDeleted();if(!d.includes(id)){d.push(id);localStorage.setItem(DEL_KEY,JSON.stringify(d))}}
+function b64dec(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,''))))}
+function b64enc(s){return btoa(unescape(encodeURIComponent(s)))}
+function setStatus(txt,ok){const el=document.getElementById('syncStatus');if(el)el.innerHTML=txt;localStorage.setItem(STATUS_KEY,JSON.stringify({txt,ok}));}
+async function ghGet(){
+  const tok=getToken();if(!tok)throw new Error('沒有 token');
+  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});
+  if(r.status===404)return null;
+  if(!r.ok)throw new Error('讀取雲端失敗：'+r.status);
+  const j=await r.json();
+  return {sha:j.sha,data:JSON.parse(b64dec(j.content))};
+}
+async function ghPut(content,sha){
+  const tok=getToken();if(!tok)throw new Error('沒有 token');
+  const body={message:'reef sync '+new Date().toISOString(),content:b64enc(content)};
+  if(sha)body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{method:'PUT',headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('寫入雲端失敗：'+r.status);
+  return r.json();
+}
+async function doSync(){
+  if(!getToken()){setStatus('⚠️ 先貼上 PAT 才能同步',false);return;}
+  setStatus('🔄 同步中…',null);
+  try{
+    const localLog=load();
+    const localDel=getDeleted();
+    const cloud=await ghGet();
+    const cLog=cloud?(cloud.data.log||[]):[];
+    const cDel=cloud?(cloud.data.deleted||[]):[];
+    const mergedDel=Array.from(new Set([...localDel,...cDel]));
+    const map={};
+    cLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id))map[r.id]={...r}});
+    localLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id)){const ex=map[r.id];if(!ex||(r.mtime||0)>=(ex.mtime||0))map[r.id]={...r}}});
+    const mergedLog=Object.values(map).sort((a,b)=>(b.mtime||0)-(a.mtime||0));
+    const payload=JSON.stringify({log:mergedLog,deleted:mergedDel});
+    await ghPut(payload,cloud?cloud.sha:undefined);
+    save(mergedLog);
+    localStorage.setItem(DEL_KEY,JSON.stringify(mergedDel));
+    renderLog();
+    setStatus('✅ 同步成功（'+mergedLog.length+' 筆 · '+new Date().toLocaleString('zh-Hant')+'）',true);
+  }catch(e){setStatus('❌ '+e.message,false);}
+}
+let _autoTimer=null;
+function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTimeout(_autoTimer);_autoTimer=setTimeout(doSync,1200);}
+
+// 同步 UI 連動
+(function initSyncUI(){
+  const tokEl=document.getElementById('syncToken');
+  if(tokEl){tokEl.value=getToken();tokEl.oninput=()=>localStorage.setItem(TOKEN_KEY,tokEl.value.trim());}
+  const nowBtn=document.getElementById('syncNowBtn');if(nowBtn)nowBtn.onclick=doSync;
+  const testBtn=document.getElementById('syncTestBtn');
+  if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{await ghGet();setStatus('✅ 連線成功，倉庫可讀',true);}catch(e){setStatus('❌ '+e.message,false);}};
+  const autoBtn=document.getElementById('autoSyncBtn');
+  function refreshAuto(){if(!autoBtn)return;const on=localStorage.getItem(AUTO_KEY)==='1';autoBtn.textContent='自動同步：'+(on?'開':'關');autoBtn.classList.toggle('on',on);}
+  if(autoBtn)autoBtn.onclick=()=>{localStorage.setItem(AUTO_KEY,localStorage.getItem(AUTO_KEY)==='1'?'0':'1');refreshAuto();};
+  refreshAuto();
+  const last=JSON.parse(localStorage.getItem(STATUS_KEY)||'null');if(last&&last.txt)setStatus(last.txt,last.ok);
+})();
 renderLog();
 </script>
 </body>
