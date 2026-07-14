@@ -35,6 +35,8 @@
   input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,243,255,.18)}
   .row{display:flex;gap:10px}
   .row>*{flex:1}
+  .fld{display:flex;flex-direction:column}
+  .custom{margin-top:6px}
   .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;
     font-size:15px;font-weight:900;color:#04121f;cursor:pointer;
     background:linear-gradient(90deg,var(--cyan),var(--green));
@@ -247,27 +249,25 @@
             <select id="lDay"></select>
           </div>
         </div>
-        <div>
-          <label>水溫 (°C)</label>
-          <input id="lTemp" type="number" inputmode="decimal" placeholder="25">
-        </div>
       </div>
       <div class="row">
-        <div><label>KH (dKH)</label><input id="lKH" type="number" inputmode="decimal"></div>
-        <div><label>Ca (mg/L)</label><input id="lCa" type="number" inputmode="decimal"></div>
+        <div class="fld"><label>水溫 (°C)</label><select id="lTemp"></select><input id="lTempC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
+        <div class="fld"><label>KH (dKH)</label><select id="lKH"></select><input id="lKHC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
       </div>
       <div class="row">
-        <div><label>Mg (mg/L)</label><input id="lMg" type="number" inputmode="decimal"></div>
-        <div><label>NO3 (mg/L)</label><input id="lNO3" type="number" inputmode="decimal"></div>
+        <div class="fld"><label>Ca (mg/L)</label><select id="lCa"></select><input id="lCaC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
+        <div class="fld"><label>Mg (mg/L)</label><select id="lMg"></select><input id="lMgC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
       </div>
       <div class="row">
-        <div><label>PO4 (mg/L)<span class="tag">換水前</span></label><input id="lPO4" type="number" inputmode="decimal"></div>
-        <div><label>比重 sg</label><input id="lSG" type="number" inputmode="decimal" step="0.001"></div>
+        <div class="fld"><label>NO3 (mg/L)</label><select id="lNO3"></select><input id="lNO3C" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
+        <div class="fld"><label>PO4 (mg/L)<span class="tag">換水前</span></label><select id="lPO4"></select><input id="lPO4C" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
+      </div>
+      <div class="row">
+        <div class="fld"><label>比重 sg</label><select id="lSG"></select><input id="lSGC" class="custom" type="number" inputmode="decimal" step="0.001" placeholder="自填" style="display:none"></div>
       </div>
       <label>備註</label>
       <input id="lNote" type="text" placeholder="例如 換水40L / 加鹽調比重">
       <button class="btn" id="logBtn">存一筆</button>
-      <button class="btn ghost" id="logCancel" style="display:none;margin-top:8px">取消編輯</button>
       <div class="hint">⚠️ PO4 等數值一律記「換水前（BEFORE）」測量的，跟哥哥習慣一致。</div>
     </div>
 
@@ -593,17 +593,59 @@ function resetLDate(){const t=new Date();document.getElementById('lYear').value=
 fillYear();fillMonth();fillDay();resetLDate();
 document.getElementById('lYear').onchange=fillDay;
 document.getElementById('lMonth').onchange=fillDay;
+/* 數值欄位下拉工廠 */
+const NUM_FIELDS=[
+  {id:'lTemp',min:15,max:35,step:0.5,unit:'°C'},
+  {id:'lKH',min:2,max:20,step:0.5,unit:'dKH'},
+  {id:'lCa',min:300,max:600,step:5,unit:'mg/L'},
+  {id:'lMg',min:900,max:1800,step:10,unit:'mg/L'},
+  {id:'lNO3',min:0,max:60,step:1,unit:'mg/L'},
+  {id:'lPO4',min:0,max:3,step:0.05,unit:'mg/L'},
+  {id:'lSG',min:1.018,max:1.030,step:0.001,unit:''}
+];
+function fmtNum(v){return (Math.round(v*1000)/1000).toString();}
+function fillNum(f){
+  const s=document.getElementById(f.id);
+  let h='<option value="">（不填）</option>';
+  for(let v=f.min;v<=f.max+1e-9;v+=f.step){
+    const sv=fmtNum(v);
+    h+='<option value="'+sv+'">'+sv+(f.unit?(' '+f.unit):'')+'</option>';
+  }
+  h+='<option value="__custom__">✎ 其他…</option>';
+  s.innerHTML=h;
+  s.onchange=()=>{
+    const c=document.getElementById(f.id+'C');
+    if(s.value==='__custom__'){c.style.display='';c.focus();}else{c.style.display='none';c.value='';}
+  };
+}
+function getNum(id){
+  const s=document.getElementById(id);
+  if(s.value==='__custom__'){return (document.getElementById(id+'C').value||'').trim();}
+  return s.value;
+}
+function setNum(id,val){
+  const s=document.getElementById(id),c=document.getElementById(id+'C');
+  if(val===''||val===null||val===undefined){s.value='';c.style.display='none';c.value='';return;}
+  const opts=[...s.options].map(o=>o.value);
+  if(opts.includes(String(val))||opts.includes(Number(val).toString())){s.value=String(val);c.style.display='none';c.value='';}
+  else{s.value='__custom__';c.style.display='';c.value=val;}
+}
+NUM_FIELDS.forEach(fillNum);
+/* 取消編輯按鈕：編輯時才出現 */
+(function(){const b=document.createElement('button');b.className='btn ghost';b.id='logCancel';b.textContent='取消編輯';b.style.display='none';b.style.marginTop='8px';document.getElementById('logBtn').insertAdjacentElement('afterend',b);b.onclick=resetForm;})();
+function resetNums(){NUM_FIELDS.forEach(f=>setNum(f.id,''));}
+function resetForm(){resetLDate();resetNums();document.getElementById('lNote').value='';editIdx=null;document.getElementById('logBtn').textContent='存一筆';document.getElementById('logCancel').style.display='none';}
 let editIdx=null;  // 編輯中筆數索引（null=新增模式）
 document.getElementById('logBtn').onclick=()=>{
   const rec={
     d:getLDate(),
-    temp:document.getElementById('lTemp').value,
-    kh:document.getElementById('lKH').value,
-    ca:document.getElementById('lCa').value,
-    mg:document.getElementById('lMg').value,
-    no3:document.getElementById('lNO3').value,
-    po4:document.getElementById('lPO4').value,
-    sg:document.getElementById('lSG').value,
+    temp:getNum('lTemp'),
+    kh:getNum('lKH'),
+    ca:getNum('lCa'),
+    mg:getNum('lMg'),
+    no3:getNum('lNO3'),
+    po4:getNum('lPO4'),
+    sg:getNum('lSG'),
     note:document.getElementById('lNote').value
   };
   const a=load();
@@ -621,15 +663,7 @@ document.getElementById('logBtn').onclick=()=>{
     a.unshift(rec);
   }
   save(a);renderLog();maybeAutoSync();
-  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
-  resetLDate();
-};
-document.getElementById('logCancel').onclick=()=>{
-  editIdx=null;
-  document.getElementById('logBtn').textContent='存一筆';
-  document.getElementById('logCancel').style.display='none';
-  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
-  resetLDate();
+  resetForm();
 };
 function renderLog(){
   const a=load();const box=document.getElementById('logList');
@@ -650,13 +684,13 @@ function renderLog(){
     const arr=load();const r=arr[+b.dataset.i];if(!r)return;
     editIdx=+b.dataset.i;
     setLDate(r.d||'');
-    document.getElementById('lTemp').value=r.temp||'';
-    document.getElementById('lKH').value=r.kh||'';
-    document.getElementById('lCa').value=r.ca||'';
-    document.getElementById('lMg').value=r.mg||'';
-    document.getElementById('lNO3').value=r.no3||'';
-    document.getElementById('lPO4').value=r.po4||'';
-    document.getElementById('lSG').value=r.sg||'';
+    setNum('lTemp',r.temp||'');
+    setNum('lKH',r.kh||'');
+    setNum('lCa',r.ca||'');
+    setNum('lMg',r.mg||'');
+    setNum('lNO3',r.no3||'');
+    setNum('lPO4',r.po4||'');
+    setNum('lSG',r.sg||'');
     document.getElementById('lNote').value=r.note||'';
     document.getElementById('logBtn').textContent='更新這筆';
     document.getElementById('logCancel').style.display='inline-block';
