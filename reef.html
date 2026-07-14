@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>海水小幫手 | Reef Tools</title>
+<style>
+  :root{
+    --bg:#050b14; --panel:#0c1626; --line:#1b2c44;
+    --cyan:#00f3ff; --purple:#b388ff; --green:#3dffb0; --pink:#ff5fa2;
+    --txt:#dbe9ff; --dim:#7e93b3;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#0a1a2e,var(--bg));
+    color:var(--txt);font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:760px;margin:0 auto;padding:14px 14px 90px}
+  header{text-align:center;padding:18px 0 10px}
+  header h1{margin:0;font-size:24px;font-weight:900;letter-spacing:1px;
+    color:#fff;text-shadow:0 0 14px var(--cyan),0 0 28px rgba(0,243,255,.5)}
+  header p{margin:6px 0 0;color:var(--dim);font-size:12px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 2px;position:sticky;top:0;
+    background:linear-gradient(var(--bg),rgba(5,11,20,.92));z-index:20}
+  .tab{flex:0 0 auto;padding:9px 13px;border:1px solid var(--line);border-radius:999px;
+    font-size:13px;font-weight:700;color:var(--dim);background:var(--panel);white-space:nowrap}
+  .tab.on{color:#04121f;background:linear-gradient(90deg,var(--cyan),var(--green));
+    border-color:transparent;box-shadow:0 0 16px rgba(0,243,255,.5)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:16px;margin:12px 0;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--cyan);
+    text-shadow:0 0 10px rgba(0,243,255,.4)}
+  label{display:block;font-size:12px;color:var(--dim);margin:12px 0 5px;font-weight:700}
+  input,select{width:100%;padding:12px;font-size:16px;border-radius:10px;
+    border:1px solid var(--line);background:#08111f;color:var(--txt);outline:none}
+  input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,243,255,.18)}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;
+    font-size:15px;font-weight:900;color:#04121f;cursor:pointer;
+    background:linear-gradient(90deg,var(--cyan),var(--green));
+    box-shadow:0 0 18px rgba(0,243,255,.45)}
+  .btn.alt{background:linear-gradient(90deg,var(--purple),var(--pink));
+    box-shadow:0 0 18px rgba(179,136,255,.45);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);box-shadow:none}
+  .out{margin-top:14px;padding:14px;border-radius:12px;background:#08111f;
+    border:1px dashed var(--line);font-size:15px;line-height:1.7}
+  .out b{color:var(--green);font-size:18px}
+  .hint{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.6}
+  .seg{display:flex;gap:6px;margin:6px 0}
+  .seg button{flex:1;padding:10px;border:1px solid var(--line);border-radius:10px;
+    background:#08111f;color:var(--dim);font-weight:700;font-size:13px}
+  .seg button.on{color:#04121f;background:linear-gradient(90deg,var(--purple),var(--pink));border-color:transparent}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+  th{color:var(--cyan);font-weight:700}
+  .logitem{padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:13px}
+  .del{float:right;color:var(--pink);font-size:12px;cursor:pointer;font-weight:700}
+  .tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:999px;
+    background:rgba(255,95,162,.15);color:var(--pink);font-weight:700;margin-left:6px}
+  footer{text-align:center;color:var(--dim);font-size:11px;padding:20px 0}
+  .badge{font-size:10px;padding:1px 6px;border-radius:6px;background:#102236;color:var(--dim);margin-left:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🌊 海水小幫手</h1>
+    <p>泡鹽換算・補比重・換水推估・數據紀錄　手機平板都能點</p>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-t="mix">泡鹽換算</div>
+    <div class="tab" data-t="sg">補比重</div>
+    <div class="tab" data-t="wc">換水推估</div>
+    <div class="tab" data-t="log">數據紀錄</div>
+  </div>
+
+  <!-- 泡鹽換算 -->
+  <section id="mix" class="tabpane">
+    <div class="card">
+      <h2>🧂 泡海鹽換算</h2>
+      <label>海鹽品牌</label>
+      <select id="salt"></select>
+      <div class="hint" id="saltSrc"></div>
+
+      <label>目標鹽度 <span id="pptVal">35</span> ppt（可調）</label>
+      <input id="ppt" type="range" min="30" max="40" step="0.5" value="35" style="padding:0">
+
+      <label>自訂係數（g/L，留空用品牌預設）</label>
+      <input id="custCoef" type="number" inputmode="decimal" placeholder="例如 37.9">
+
+      <div class="seg" style="margin-top:14px">
+        <button id="modeVol" class="on">算：幾公升要幾克鹽</button>
+        <button id="modeSalt">算：幾克鹽泡幾公升</button>
+      </div>
+
+      <div id="volBox">
+        <label>目標水量（公升）</label>
+        <input id="vol" type="number" inputmode="decimal" placeholder="例如 350">
+      </div>
+      <div id="saltBox" style="display:none">
+        <label>已有海鹽（克）</label>
+        <input id="saltg" type="number" inputmode="decimal" placeholder="例如 13200">
+      </div>
+
+      <button class="btn" id="mixBtn">算出來！</button>
+      <div class="out" id="mixOut">輸入後按「算出來」～</div>
+      <div class="hint">📌 紅海鹽（你這罐）係數 37.9 為社群常見值，請以桶身標示為準，App 內可隨時改。</div>
+    </div>
+  </section>
+
+  <!-- 補比重 -->
+  <section id="sg" class="tabpane" style="display:none">
+    <div class="card">
+      <h2>⚖️ 補比重計算（雙向）</h2>
+      <label>缸內總水量（公升）</label>
+      <input id="sgVol" type="number" inputmode="decimal" placeholder="例如 350">
+
+      <label>目前比重 sg</label>
+      <input id="sgNow" type="number" inputmode="decimal" step="0.001" placeholder="例如 1.027">
+
+      <label>目標比重 sg</label>
+      <input id="sgTarget" type="number" inputmode="decimal" step="0.001" placeholder="例如 1.025">
+
+      <button class="btn" id="sgBtn">算出來！</button>
+      <div class="out" id="sgOut">輸入後按「算出來」～</div>
+      <div class="hint">📌 比重讀值請以校準過的折射計為準。算法為 hobby 級近似：鹽量正比於 (sg−1)，35ppt↔sg1.025。</div>
+    </div>
+  </section>
+
+  <!-- 換水推估 -->
+  <section id="wc" class="tabpane" style="display:none">
+    <div class="card">
+      <h2>💧 換水推估（稀釋計算）</h2>
+      <label>缸總水量（公升）</label>
+      <input id="wcVol" type="number" inputmode="decimal" placeholder="例如 350">
+
+      <div class="seg">
+        <button id="wcModeL" class="on">用「換水量(公升)」</button>
+        <button id="wcModeP">用「換水比例(%)」</button>
+      </div>
+      <div id="wcLBox">
+        <label>本次換水量（公升）</label>
+        <input id="wcL" type="number" inputmode="decimal" placeholder="例如 40">
+      </div>
+      <div id="wcPBox" style="display:none">
+        <label>換水比例（%）</label>
+        <input id="wcP" type="number" inputmode="decimal" placeholder="例如 11.4">
+      </div>
+
+      <label>換水前濃度（缸內舊水）</label>
+      <input id="wcBefore" type="number" inputmode="decimal" placeholder="例如 0.346 (PO4 mg/L)">
+
+      <label>新水濃度（預設 0 = 純 RO/新泡海水）</label>
+      <input id="wcNew" type="number" inputmode="decimal" placeholder="0">
+
+      <button class="btn" id="wcBtn">推估！</button>
+      <div class="out" id="wcOut">輸入後按「推估」～</div>
+      <div class="hint">📌 公式：換水後 = 換水前×(1−比例) + 新水×比例。例：350L 換 40L、PO4 換水前 0.346 → 約 0.307。</div>
+    </div>
+  </section>
+
+  <!-- 數據紀錄 -->
+  <section id="log" class="tabpane" style="display:none">
+    <div class="card">
+      <h2>📋 水質數據紀錄</h2>
+      <div class="row">
+        <div>
+          <label>日期</label>
+          <input id="lDate" type="date">
+        </div>
+        <div>
+          <label>水溫 (°C)</label>
+          <input id="lTemp" type="number" inputmode="decimal" placeholder="25">
+        </div>
+      </div>
+      <div class="row">
+        <div><label>KH (dKH)</label><input id="lKH" type="number" inputmode="decimal"></div>
+        <div><label>Ca (mg/L)</label><input id="lCa" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Mg (mg/L)</label><input id="lMg" type="number" inputmode="decimal"></div>
+        <div><label>NO3 (mg/L)</label><input id="lNO3" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>PO4 (mg/L)<span class="tag">換水前</span></label><input id="lPO4" type="number" inputmode="decimal"></div>
+        <div><label>比重 sg</label><input id="lSG" type="number" inputmode="decimal" step="0.001"></div>
+      </div>
+      <label>備註</label>
+      <input id="lNote" type="text" placeholder="例如 換水40L / 加鹽調比重">
+      <button class="btn" id="logBtn">存一筆</button>
+      <div class="hint">⚠️ PO4 等數值一律記「換水前（BEFORE）」測量的，跟哥哥習慣一致。</div>
+    </div>
+
+    <div class="card">
+      <h2>📜 紀錄列表（本機儲存）</h2>
+      <button class="btn ghost" id="expBtn">匯出 CSV</button>
+      <button class="btn ghost" id="clrBtn" style="margin-top:8px">清空全部</button>
+      <div id="logList"></div>
+    </div>
+  </section>
+
+  <footer>小雲兒幫哥哥做的 💛 數值僅供參考，實際以檢測器材為準</footer>
+</div>
+
+<script>
+/* ===== 海鹽係數表（g/L @35ppt）===== */
+const SALTS = [
+  {id:'rss',  name:'Red Sea Salt（紅海鹽/藍桶）', gpl:37.9, src:'社群常見值・待桶身確認'},
+  {id:'rscp', name:'Red Sea Coral Pro（紅海珊瑚Pro）', gpl:38.2, src:'官方手冊'},
+  {id:'io',   name:'Instant Ocean', gpl:35.0, src:'官方 FAQ'},
+  {id:'rc',   name:'Reef Crystals', gpl:40.8, src:'社群常見值'},
+  {id:'tmp',  name:'Tropic Marin Pro Reef', gpl:35.0, src:'社群（33–35有歧義）'},
+  {id:'rpm',  name:'Fritz RPM Reef Pro Mix', gpl:37.9, src:'社群推估'},
+  {id:'av',   name:'aquavitro Salinity', gpl:36.0, src:'官方'},
+  {id:'bw',   name:'Brightwell NeoMarine', gpl:38.0, src:'社群常見值'},
+];
+
+/* ===== tab 切換 ===== */
+const tabs=document.getElementById('tabs');
+tabs.addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tabpane').forEach(x=>x.style.display='none');
+  t.classList.add('on');
+  document.getElementById(t.dataset.t).style.display='block';
+});
+
+/* ===== 初始化品牌下拉 ===== */
+const saltSel=document.getElementById('salt');
+SALTS.forEach(s=>{
+  const o=document.createElement('option');o.value=s.id;o.textContent=s.name;saltSel.appendChild(o);
+});
+const saltSrc=document.getElementById('saltSrc');
+function updSrc(){
+  const s=SALTS.find(x=>x.id===saltSel.value);
+  const cust=document.getElementById('custCoef').value;
+  saltSrc.innerHTML=`預設係數 <b style="color:var(--green)">${s.gpl}</b> g/L　<span class="badge">${s.src}</span>`+
+    (cust?`　｜　自訂 <b style="color:var(--pink)">${cust}</b> g/L 生效`:'');
+}
+saltSel.addEventListener('change',updSrc);
+document.getElementById('custCoef').addEventListener('input',updSrc);
+updSrc();
+
+/* ppt 滑桿 */
+const ppt=document.getElementById('ppt'), pptVal=document.getElementById('pptVal');
+ppt.addEventListener('input',()=>pptVal.textContent=ppt.value);
+
+/* 泡鹽 模式切換 */
+let mixMode='vol';
+const bV=document.getElementById('modeVol'), bS=document.getElementById('modeSalt');
+bV.onclick=()=>{mixMode='vol';bV.classList.add('on');bS.classList.remove('on');
+  document.getElementById('volBox').style.display='block';document.getElementById('saltBox').style.display='none';};
+bS.onclick=()=>{mixMode='salt';bS.classList.add('on');bV.classList.remove('on');
+  document.getElementById('volBox').style.display='none';document.getElementById('saltBox').style.display='block';};
+
+document.getElementById('mixBtn').onclick=()=>{
+  const s=SALTS.find(x=>x.id===saltSel.value);
+  const cust=parseFloat(document.getElementById('custCoef').value);
+  const coef=(!isNaN(cust)&&cust>0)?cust:s.gpl;
+  const pptv=parseFloat(ppt.value)||35;
+  const factor=pptv/35; // 線性近似
+  const out=document.getElementById('mixOut');
+  if(mixMode==='vol'){
+    const vol=parseFloat(document.getElementById('vol').value);
+    if(!vol||vol<=0){out.textContent='請輸入水量（公升）';return;}
+    const g=vol*coef*factor;
+    out.innerHTML=`目標 <b>${vol}</b> 公升、<b>${pptv}</b> ppt<br>需要海鹽約 <b>${g.toFixed(1)}</b> 克`+
+      (cust?'（自訂係數）':'（'+s.name+'）');
+  }else{
+    const sg=parseFloat(document.getElementById('saltg').value);
+    if(!sg||sg<=0){out.textContent='請輸入海鹽克數';return;}
+    const vol=sg/(coef*factor);
+    out.innerHTML=`海鹽 <b>${sg}</b> 克、<b>${pptv}</b> ppt<br>可泡約 <b>${vol.toFixed(1)}</b> 公升`+
+      (cust?'（自訂係數）':'（'+s.name+'）');
+  }
+};
+
+/* ===== 補比重 ===== */
+document.getElementById('sgBtn').onclick=()=>{
+  const V=parseFloat(document.getElementById('sgVol').value);
+  const s1=parseFloat(document.getElementById('sgNow').value);
+  const s2=parseFloat(document.getElementById('sgTarget').value);
+  const out=document.getElementById('sgOut');
+  if(!V||!s1||!s2){out.textContent='請填 水量 / 目前sg / 目標sg';return;}
+  const K=1400; // 35ppt / (1.025-1) ≈ 1400 g/L per (sg-1)
+  if(Math.abs(s1-s2)<0.0005){out.innerHTML='目前比重已等於目標，不用調整 ✅';return;}
+  if(s1>s2){
+    const addW=V*((s1-s2)/(s2-1)); // 加純水降比重
+    out.innerHTML=`比重偏高，需加 <b>RO 純水 ${addW.toFixed(1)}</b> 公升<br>`+
+      `<span class="hint">降回 sg ${s2}（${V}L 缸）</span>`;
+  }else{
+    const addS=V*K*(s2-s1); // 補鹽升比重
+    out.innerHTML=`比重偏低，需補 <b>海鹽約 ${addS.toFixed(1)}</b> 克<br>`+
+      `<span class="hint">升回 sg ${s2}（${V}L 缸，係數 ${K}）</span>`;
+  }
+};
+
+/* ===== 換水推估 ===== */
+let wcMode='L';
+const wL=document.getElementById('wcModeL'), wP=document.getElementById('wcModeP');
+wL.onclick=()=>{wcMode='L';wL.classList.add('on');wP.classList.remove('on');
+  document.getElementById('wcLBox').style.display='block';document.getElementById('wcPBox').style.display='none';};
+wP.onclick=()=>{wcMode='P';wP.classList.add('on');wL.classList.remove('on');
+  document.getElementById('wcLBox').style.display='none';document.getElementById('wcPBox').style.display='block';};
+document.getElementById('wcBtn').onclick=()=>{
+  const V=parseFloat(document.getElementById('wcVol').value);
+  const before=parseFloat(document.getElementById('wcBefore').value);
+  let nw=parseFloat(document.getElementById('wcNew').value); if(isNaN(nw))nw=0;
+  let f;
+  if(wcMode==='L'){const L=parseFloat(document.getElementById('wcL').value);
+    if(!V||!L){document.getElementById('wcOut').textContent='請填 缸水量 與 換水量';return;}
+    f=L/V;
+  }else{const P=parseFloat(document.getElementById('wcP').value);
+    if(!V||!P){document.getElementById('wcOut').textContent='請填 缸水量 與 換水比例';return;}
+    f=P/100;
+  }
+  if(f<0||f>1){document.getElementById('wcOut').textContent='換水比例需在 0–100%';return;}
+  const after=before*(1-f)+nw*f;
+  document.getElementById('wcOut').innerHTML=
+    `換水比例 <b>${(f*100).toFixed(1)}%</b><br>`+
+    `換水前 <b>${before}</b> → 換水後約 <b>${after.toFixed(4)}</b>`;
+};
+
+/* ===== 數據紀錄 ===== */
+const KEY='reef_log_v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
+function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
+document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+document.getElementById('logBtn').onclick=()=>{
+  const a=load();
+  a.unshift({
+    d:document.getElementById('lDate').value,
+    temp:document.getElementById('lTemp').value,
+    kh:document.getElementById('lKH').value,
+    ca:document.getElementById('lCa').value,
+    mg:document.getElementById('lMg').value,
+    no3:document.getElementById('lNO3').value,
+    po4:document.getElementById('lPO4').value,
+    sg:document.getElementById('lSG').value,
+    note:document.getElementById('lNote').value
+  });
+  save(a);renderLog();
+  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+};
+function renderLog(){
+  const a=load();const box=document.getElementById('logList');
+  if(!a.length){box.innerHTML='<div class="hint">還沒紀錄～</div>';return;}
+  box.innerHTML=a.map((r,i)=>{
+    const cells=[['KH',r.kh],['Ca',r.ca],['Mg',r.mg],['NO3',r.no3],['PO4',r.po4],['sg',r.sg],['°C',r.temp]]
+      .filter(c=>c[1]).map(c=>`${c[0]}:${c[1]}`).join(' ｜ ');
+    return `<div class="logitem"><span class="del" data-i="${i}">刪除</span>`+
+      `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
+  }).join('');
+  box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{
+    const arr=load();arr.splice(+b.dataset.i,1);save(arr);renderLog();
+  });
+}
+document.getElementById('expBtn').onclick=()=>{
+  const a=load();if(!a.length){alert('沒有資料可匯出');return;}
+  const head=['日期','水溫','KH','Ca','Mg','NO3','PO4_換水前','比重','備註'];
+  const rows=a.map(r=>[r.d,r.temp,r.kh,r.ca,r.mg,r.no3,r.po4,r.sg,r.note].join(','));
+  const csv='\uFEFF'+head.join(',')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const u=URL.createObjectURL(blob);const a2=document.createElement('a');
+  a2.href=u;a2.download='reef_log.csv';a2.click();URL.revokeObjectURL(u);
+};
+document.getElementById('clrBtn').onclick=()=>{
+  if(confirm('確定清空全部紀錄？')){localStorage.removeItem(KEY);renderLog();}
+};
+renderLog();
+</script>
+</body>
+</html>
