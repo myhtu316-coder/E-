@@ -98,7 +98,9 @@
 
       <div id="volBox">
         <label>目標水量（公升）</label>
-        <input id="vol" type="number" inputmode="decimal" placeholder="例如 350">
+        <select id="vol">
+          <option value="">請選擇水量</option>
+        </select>
       </div>
       <div id="saltBox" style="display:none">
         <label>已有海鹽（克）</label>
@@ -137,7 +139,9 @@
     <div class="card">
       <h2>💧 換水推估（稀釋計算）</h2>
       <label>缸總水量（公升）</label>
-      <input id="wcVol" type="number" inputmode="decimal" placeholder="例如 350">
+      <select id="wcVol">
+        <option value="">請選擇水量</option>
+      </select>
 
       <div class="seg">
         <button id="wcModeL" class="on">用「換水量(公升)」</button>
@@ -145,7 +149,9 @@
       </div>
       <div id="wcLBox">
         <label>本次換水量（公升）</label>
-        <input id="wcL" type="number" inputmode="decimal" placeholder="例如 40">
+        <select id="wcL">
+          <option value="">請選擇</option>
+        </select>
       </div>
       <div id="wcPBox" style="display:none">
         <label>換水比例（%）</label>
@@ -185,7 +191,9 @@
       <h2>⚗️ 氯化鑭劑量計算</h2>
 
       <label>缸總水量（公升）</label>
-      <input id="laVol" type="number" inputmode="decimal" placeholder="例如 350">
+      <select id="laVol">
+        <option value="">請選擇水量</option>
+      </select>
 
       <div class="seg" style="margin-top:14px">
         <button id="laModeD" class="on">用「想降多少 PO4」</button>
@@ -370,6 +378,25 @@ document.getElementById('mixBtn').onclick=()=>{
     const o=document.createElement('option');
     o.value=v; o.textContent=v+' L';
     vol.appendChild(o);
+  }
+  // 全站「缸/目標水量」統一下拉（50L 階）：泡鹽 vol / 換水 wcVol / 氯化鑭 laVol
+  ['vol','wcVol','laVol'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    for(let v=50; v<=1000; v+=50){
+      const o=document.createElement('option');
+      o.value=v; o.textContent=v+' L';
+      el.appendChild(o);
+    }
+  });
+  // 換水推估「本次換水量」特例：5L 為一階（哥哥指定）
+  const wcL=document.getElementById('wcL');
+  if(wcL){
+    for(let v=5; v<=500; v+=5){
+      const o=document.createElement('option');
+      o.value=v; o.textContent=v+' L';
+      wcL.appendChild(o);
+    }
   }
   const sgNow=document.getElementById('sgNow');
   const sgTarget=document.getElementById('sgTarget');
