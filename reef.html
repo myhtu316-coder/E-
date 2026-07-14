@@ -149,10 +149,19 @@
         <input id="wcP" type="number" inputmode="decimal" placeholder="例如 11.4">
       </div>
 
-      <label>換水前濃度（缸內舊水）</label>
+      <label>要算哪個參數？</label>
+      <select id="wcParam">
+        <option value="PO4" data-unit="mg/L" data-ex="0.346">PO4（磷酸鹽）</option>
+        <option value="NO3" data-unit="mg/L" data-ex="9">NO3（硝酸鹽）</option>
+        <option value="KH" data-unit="dKH" data-ex="8">KH（碳酸鹼度）</option>
+        <option value="Ca" data-unit="ppm" data-ex="420">Ca（鈣）</option>
+        <option value="Mg" data-unit="ppm" data-ex="1300">Mg（鎂）</option>
+      </select>
+
+      <label id="wcBeforeLbl">換水前 PO4 濃度（缸內舊水，mg/L）</label>
       <input id="wcBefore" type="number" inputmode="decimal" placeholder="例如 0.346 (PO4 mg/L)">
 
-      <label>新水濃度（預設 0 = 純 RO/新泡海水）</label>
+      <label id="wcNewLbl" for="wcNew">新水濃度（預設 0 = 純 RO/新泡海水）</label>
       <input id="wcNew" type="number" inputmode="decimal" placeholder="0">
 
       <button class="btn" id="wcBtn">推估！</button>
@@ -357,10 +366,26 @@ wL.onclick=()=>{wcMode='L';wL.classList.add('on');wP.classList.remove('on');
   document.getElementById('wcLBox').style.display='block';document.getElementById('wcPBox').style.display='none';};
 wP.onclick=()=>{wcMode='P';wP.classList.add('on');wL.classList.remove('on');
   document.getElementById('wcLBox').style.display='none';document.getElementById('wcPBox').style.display='block';};
+// 換水參數下拉：切換 label/placeholder/單位
+const wcParam=document.getElementById('wcParam');
+const wcBeforeLbl=document.getElementById('wcBeforeLbl');
+const wcBeforeInput=document.getElementById('wcBefore');
+const wcNewLbl=document.getElementById('wcNewLbl');
+function syncWcParam(){
+  const o=wcParam.options[wcParam.selectedIndex];
+  const name=o.value, unit=o.dataset.unit, ex=o.dataset.ex;
+  wcBeforeLbl.textContent=`換水前 ${name} 濃度（缸內舊水，${unit}）`;
+  wcBeforeInput.placeholder=`例如 ${ex} (${name} ${unit})`;
+  if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（預設 0 = 純 RO/新泡海水，${unit}）`;
+}
+wcParam.onchange=syncWcParam; syncWcParam();
+
 document.getElementById('wcBtn').onclick=()=>{
   const V=parseFloat(document.getElementById('wcVol').value);
   const before=parseFloat(document.getElementById('wcBefore').value);
   let nw=parseFloat(document.getElementById('wcNew').value); if(isNaN(nw))nw=0;
+  const pname=wcParam.options[wcParam.selectedIndex].value;
+  const punit=wcParam.options[wcParam.selectedIndex].dataset.unit;
   let f;
   if(wcMode==='L'){const L=parseFloat(document.getElementById('wcL').value);
     if(!V||!L){document.getElementById('wcOut').textContent='請填 缸水量 與 換水量';return;}
@@ -373,7 +398,7 @@ document.getElementById('wcBtn').onclick=()=>{
   const after=before*(1-f)+nw*f;
   document.getElementById('wcOut').innerHTML=
     `換水比例 <b>${(f*100).toFixed(1)}%</b><br>`+
-    `換水前 <b>${before}</b> → 換水後約 <b>${after.toFixed(4)}</b>`;
+    `換水前 ${pname} <b>${before}</b> ${punit} → 換水後約 <b>${after.toFixed(4)}</b> ${punit}`;
 };
 
 /* ===== 氯化鑭劑量 ===== */
