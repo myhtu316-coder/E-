@@ -116,13 +116,15 @@
     <div class="card">
       <h2>⚖️ 補比重計算（雙向）</h2>
       <label>缸內總水量（公升）</label>
-      <input id="sgVol" type="number" inputmode="decimal" placeholder="例如 350">
+      <select id="sgVol">
+        <option value="">請選擇水量</option>
+      </select>
 
       <label>目前比重 sg</label>
-      <input id="sgNow" type="number" inputmode="decimal" step="0.001" placeholder="例如 1.027">
+      <select id="sgNow"><option value="">請選擇</option></select>
 
       <label>目標比重 sg</label>
-      <input id="sgTarget" type="number" inputmode="decimal" step="0.001" placeholder="例如 1.025">
+      <select id="sgTarget"><option value="">請選擇</option></select>
 
       <button class="btn" id="sgBtn">算出來！</button>
       <div class="out" id="sgOut">輸入後按「算出來」～</div>
@@ -361,12 +363,28 @@ document.getElementById('mixBtn').onclick=()=>{
 };
 
 /* ===== 補比重 ===== */
+// 動態填充下拉：水量（50L 為一階）與比重選項
+(function(){
+  const vol=document.getElementById('sgVol');
+  for(let v=50; v<=1000; v+=50){
+    const o=document.createElement('option');
+    o.value=v; o.textContent=v+' L';
+    vol.appendChild(o);
+  }
+  const sgNow=document.getElementById('sgNow');
+  const sgTarget=document.getElementById('sgTarget');
+  for(let s=1.020; s<=1.032; s+=0.001){
+    const v=s.toFixed(3);
+    sgNow.appendChild(new Option(v, v));
+    sgTarget.appendChild(new Option(v, v));
+  }
+})();
 document.getElementById('sgBtn').onclick=()=>{
   const V=parseFloat(document.getElementById('sgVol').value);
   const s1=parseFloat(document.getElementById('sgNow').value);
   const s2=parseFloat(document.getElementById('sgTarget').value);
   const out=document.getElementById('sgOut');
-  if(!V||!s1||!s2){out.textContent='請填 水量 / 目前sg / 目標sg';return;}
+  if(!V||!s1||!s2){out.textContent='請選 水量 / 目前sg / 目標sg';return;}
   const K=1400; // 35ppt / (1.025-1) ≈ 1400 g/L per (sg-1)
   if(Math.abs(s1-s2)<0.0005){out.innerHTML='目前比重已等於目標，不用調整 ✅';return;}
   if(s1>s2){
