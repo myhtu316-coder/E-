@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050b14">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="海水小幫手">
 <title>海水小幫手 | Reef Tools</title>
 <style>
   :root{
@@ -823,6 +829,13 @@ function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null
   if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}
 })();
 renderLog();
+
+// PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
+  });
+}
 </script>
 </body>
 </html>
