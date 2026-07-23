@@ -67,7 +67,12 @@
   .edit{float:right;color:var(--cyan);font-size:12px;cursor:pointer;font-weight:700}
   .tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:999px;
     background:rgba(255,95,162,.15);color:var(--pink);font-weight:700;margin-left:6px}
-  footer{text-align:center;color:var(--dim);font-size:11px;padding:20px 0}
+  .footer{text-align:center;color:var(--dim);font-size:11px;padding:20px 0}
+  .statcard{display:flex;gap:10px;justify-content:center;margin:14px 0 4px;flex-wrap:wrap}
+  .statcard .stat{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 16px}
+  .statcard .ico{font-size:22px}
+  .statcard b{color:var(--cyan);font-size:20px;text-shadow:0 0 10px rgba(0,243,255,.4)}
+  .statcard small{display:block;color:var(--dim);font-size:11px;margin-top:2px;font-weight:700}
   .badge{font-size:10px;padding:1px 6px;border-radius:6px;background:#102236;color:var(--dim);margin-left:4px}
 </style>
 </head>
@@ -305,7 +310,12 @@
     </div>
   </section>
 
-  <footer>小雲兒幫哥哥做的 💛 數值僅供參考，實際以檢測器材為準</footer>
+  <!-- 活動熱度統計 -->
+  <div class="statcard" id="statCard">
+    <div class="stat"><span class="ico">📝</span><div><b id="statSignups">—</b><small>人已報名</small></div></div>
+    <div class="stat"><span class="ico">📚</span><div><b id="statBooks">—</b><small>本電子書已分享</small></div></div>
+  </div>
+  <footer>小雲兒幫哥哥做的 💛 數值僅供參考，實際以檢測器材為準　｜　👁️ 網站參觀 <b id="statViews">—</b> 次</footer>
 </div>
 
 <script>
@@ -829,6 +839,40 @@ function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null
   if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}
 })();
 renderLog();
+
+/* ===== 活動熱度統計（Supabase REST RPC）===== */
+(function(){
+  const SB_URL='https://hjewpxgnxilezpbcjnzr.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZXdweGdueGlsZXpwYmNqbnpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NjAxODcsImV4cCI6MjA5OTMzNjE4N30.xNPIsnMmnvvgH8PXz6vcwz42S3RwA_ZErlRd1mPA2BE';
+  async function rpc(name){
+    const r=await fetch(SB_URL+'/rest/v1/rpc/'+name,{method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});
+    if(!r.ok) throw new Error(name+' '+r.status);
+    return r.json();
+  }
+  const elV=document.getElementById('statViews');
+  const elS=document.getElementById('statSignups');
+  const elB=document.getElementById('statBooks');
+  // 報名數 + 電子書數
+  rpc('get_event_stats').then(st=>{
+    if(st&&st.signups!=null) elS.textContent=st.signups;
+    if(st&&st.books!=null) elB.textContent=st.books;
+  }).catch(()=>{});
+  // 點閱數（同一瀏覽器同日只 +1，避免狂刷新灌水）
+  const today=new Date().toISOString().slice(0,10);
+  (async()=>{
+    try{
+      if(localStorage.getItem('reef_viewed')!==today){
+        const v=await rpc('bump_page_view');
+        if(typeof v==='number'){elV.textContent=v;localStorage.setItem('reef_views_val',v);}
+        localStorage.setItem('reef_viewed',today);
+      }else{
+        const v=await rpc('get_page_views');
+        if(typeof v==='number') elV.textContent=v;
+      }
+    }catch(e){}
+  })();
+})();
 
 // PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
 if ('serviceWorker' in navigator) {
