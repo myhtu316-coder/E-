@@ -1,0 +1,23 @@
+# 前端依賴（靜態站點不需要上傳）
+node_modules/
+package.json
+package-lock.json
+
+# 暫存 / 雜檔
+*.tmp
+images/0.tmp
+
+# 海水缸私有資料與腳本（CSV 不對外公開）
+*.csv
+reef_log_import*.csv
+sync_reef_*.py
+
+# 未被海報 / 網站引用的本機副本（避免 push 上去佔空間、也避免破圖風險）
+images/prize03.jpg
+images/prize01.webp
+qr-ewei.png
+top-logo-original.jpg
+images/top-logo-sent.jpg
+images/logo_*.png
+prizes_preview.png
+tank_flow_diagram.png
