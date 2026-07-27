@@ -185,6 +185,10 @@
             0%, 100% { transform: translateY(0); box-shadow: 0 0 20px rgba(0, 243, 255, 0.3); }
             50% { transform: translateY(-10px); box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); }
         }
+        /* 手機版隱藏漂浮報名按鈕（電腦版維持顯示，導覽列另有報名入口） */
+        @media (max-width: 768px) {
+            .floating-join { display: none; }
+        }
         /* Left Floating Stats Panel */
         .stat-float {
             position: fixed;
