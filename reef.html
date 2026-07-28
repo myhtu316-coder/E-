@@ -579,7 +579,6 @@ document.getElementById('laBtn').onclick=()=>{
 
 /* ===== 數據紀錄 ===== */
 const KEY='reef_log_v1';
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
 function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 // 舊紀錄補上 id / mtime（每裝置只跑一次，之後 id 就穩定可跨裝置合併）
@@ -671,6 +670,7 @@ document.getElementById('logBtn').onclick=()=>{
   save(a);renderLog();maybeAutoSync();
   resetForm();
 };
+function load(){try{const a=JSON.parse(localStorage.getItem(KEY))||[];return a.sort((x,y)=>{const dx=(x.d||'').toString(),dy=(y.d||'').toString();if(dx!==dy)return dx<dy?1:-1;return (y.mtime||0)-(x.mtime||0);});}catch(e){return[]}}
 function renderLog(){
   const a=load();const box=document.getElementById('logList');
   if(!a.length){box.innerHTML='<div class="hint">還沒紀錄～</div>';return;}
@@ -796,7 +796,11 @@ async function doSync(){
     const map={};
     cLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id))map[r.id]={...r}});
     localLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id)){const ex=map[r.id];if(!ex||(r.mtime||0)>=(ex.mtime||0))map[r.id]={...r}}});
-    const mergedLog=Object.values(map).sort((a,b)=>(b.mtime||0)-(a.mtime||0));
+    const mergedLog=Object.values(map).sort((a,b)=>{
+      const da=(a.d||'').toString(),db=(b.d||'').toString();
+      if(da!==db)return da<db?1:-1;
+      return (b.mtime||0)-(a.mtime||0);
+    });
     const payload=JSON.stringify({log:mergedLog,deleted:mergedDel});
     await ghPut(payload,cloud?cloud.sha:undefined);
     save(mergedLog);

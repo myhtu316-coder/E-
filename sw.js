@@ -1,4 +1,4 @@
-const CACHE = 'reef-v1';
+const CACHE = 'reef-v2';
 const ASSETS = [
   './reef.html',
   './icon-192.png',
