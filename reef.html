@@ -383,7 +383,7 @@ document.getElementById('mixBtn').onclick=()=>{
   const factor=pptv/35; // 線性近似
   const out=document.getElementById('mixOut');
   if(mixMode==='vol'){
-    const vol=parseFloat(document.getElementById('vol').value);
+    const vol=window.getVolValue?window.getVolValue():parseFloat(document.getElementById('vol').value);
     if(!vol||vol<=0){out.textContent='請輸入水量（公升）';return;}
     const g=vol*coef*factor;
     const sgShow=(1+(pptv/35)*0.025).toFixed(4);
@@ -408,8 +408,8 @@ document.getElementById('mixBtn').onclick=()=>{
     o.value=v; o.textContent=v+' L';
     vol.appendChild(o);
   }
-  // 全站「缸/目標水量」統一下拉（50L 階）：泡鹽 vol / 換水 wcVol / 氯化鑭 laVol
-  ['vol','wcVol','laVol'].forEach(id=>{
+  // === 全站通用「缸/目標水量」下拉（50L 階，上限 1000L）：換水 wcVol / 氯化鑭 laVol ===
+  ['wcVol','laVol'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el) return;
     for(let v=50; v<=1000; v+=50){
@@ -418,6 +418,53 @@ document.getElementById('mixBtn').onclick=()=>{
       el.appendChild(o);
     }
   });
+
+// === 泡鹽換算專用：目標水量 vol（5L 階，上限 200L + 自訂）===
+  (function(){
+    const vol=document.getElementById('vol');
+    if(!vol) return;
+    // 5L 到 200L
+    for(let v=5; v<=200; v+=5){
+      const o=document.createElement('option');
+      o.value=v; o.textContent=v+' L';
+      vol.appendChild(o);
+    }
+    // 自訂選項
+    const custom=document.createElement('option');
+    custom.value='__custom__'; custom.textContent='✎ 自訂水量…';
+    vol.appendChild(custom);
+
+    // 自訂輸入框（隱藏，選「自訂」時顯示）
+    const customInput=document.createElement('input');
+    customInput.type='number';
+    customInput.id='volCustom';
+    customInput.inputMode='decimal';
+    customInput.placeholder='輸入公升數（如 37.5）';
+    customInput.step='0.5';
+    customInput.min='0.5';
+    customInput.style.cssText='width:100%;margin-top:8px;padding:12px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:#08111f;color:var(--txt);display:none';
+    vol.parentNode.insertBefore(customInput, vol.nextSibling);
+
+    // 切換顯示/隱藏
+    vol.onchange=()=>{
+      if(vol.value==='__custom__'){
+        customInput.style.display='';
+        customInput.focus();
+      }else{
+        customInput.style.display='none';
+        customInput.value='';
+      }
+    };
+
+    // 取值 helper（供計算按鈕用）
+    window.getVolValue=()=>{
+      if(vol.value==='__custom__'){
+        const v=parseFloat(customInput.value);
+        return (v && v>0) ? v : null;
+      }
+      return vol.value ? parseFloat(vol.value) : null;
+    };
+  })();
   // 換水推估「本次換水量」特例：5L 為一階（哥哥指定）
   const wcL=document.getElementById('wcL');
   if(wcL){
