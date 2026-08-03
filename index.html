@@ -277,8 +277,8 @@
                 <a href="#sponsors" class="hover:text-cyan-400 transition-colors text-[16px]">贊助單位</a>
                 <a href="#organizers" class="hover:text-cyan-400 transition-colors text-[16px]">辦理單位</a>
             </div>
-            <a href="https://taebdcnkust-register.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn-cyber px-5 py-2 rounded-full text-xs font-black transition-all">
-                參加活動 / JOIN EVENT
+            <a href="coming-soon.html" data-join-btn target="_blank" rel="noopener noreferrer" class="btn-cyber px-5 py-2 rounded-full text-xs font-black transition-all">
+            參加活動 / JOIN EVENT
             </a>
         </div>
     </nav>
@@ -625,7 +625,7 @@
     </footer>
 
     <!-- Floating Action Button -->
-    <a href="https://taebdcnkust-register.vercel.app/" target="_blank" rel="noopener noreferrer" class="floating-join">
+    <a href="coming-soon.html" data-join-btn target="_blank" rel="noopener noreferrer" class="floating-join">
         參加活動 / JOIN EVENT
     </a>
 
@@ -691,6 +691,22 @@
             }
         }catch(e){}
     })();
+    })();
+    </script>
+
+    <!-- 參加活動按鈕：8/24 00:00 前連倒數頁，之後自動切到報名網站 -->
+    <script>
+    (function () {
+      const EVENT_START = new Date('2026-08-24T00:00:00+08:00').getTime();
+      const REGISTER_URL = 'https://taebdcnkust-register.vercel.app/';
+      const COMING_SOON = 'coming-soon.html';
+      const now = Date.now();
+      const btns = document.querySelectorAll('a[data-join-btn]');
+      if (now >= EVENT_START) {
+        btns.forEach(function (b) { b.setAttribute('href', REGISTER_URL); });
+      } else {
+        btns.forEach(function (b) { b.setAttribute('href', COMING_SOON); });
+      }
     })();
     </script>
 </body>
