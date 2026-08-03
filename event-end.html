@@ -149,11 +149,9 @@
 
     <span class="date-pill" id="datePill">📅 2026 / 10 / 31 11:59 活動截止</span>
     <p class="thanks" id="thanks" style="display:none;">
-      活動已經圓滿結束 🎉<br/>
+      活動已結束 🎉<br/>
       感謝大家的熱情參與！<br/><br/>
-      <span class="highlight">💡 溫馨提醒</span><br/>
-      本次活動可「無限次數分享」<br/>
-      分享越多，抽獎機會越高喔 🎁
+      抽獎結果將公佈於聯盟網站
     </p>
   </main>
 
@@ -174,9 +172,9 @@
     function tick() {
       const diff = target - Date.now();
       if (diff <= 0) {
-        el.d.textContent = '0'; el.h.textContent = '00';
-        el.m.textContent = '00'; el.s.textContent = '00';
-        subEl.textContent = '活動已經圓滿結束 🎉';
+        // 活動已結束（11/1 00:00 起）：隱藏倒數與日期標籤，顯示結束訊息
+        document.getElementById('countdown').style.display = 'none';
+        subEl.textContent = '活動已結束 🎉';
         waitEl.textContent = '感謝大家的熱情參與 ~';
         pillEl.style.display = 'none';
         thanksEl.style.display = 'block';
