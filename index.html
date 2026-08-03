@@ -694,15 +694,19 @@
     })();
     </script>
 
-    <!-- 參加活動按鈕：8/24 00:00 前連倒數頁，之後自動切到報名網站 -->
+    <!-- 參加活動按鈕：8/4 00:00 先切報名頁測試，8/4 12:00 cron 還原回倒數頁(等到 8/24 正式開跑)；11/1 00:00 起改連活動結束頁 -->
     <script>
     (function () {
       const EVENT_START = new Date('2026-08-04T00:00:00+08:00').getTime();
+      const EVENT_END   = new Date('2026-11-01T00:00:00+08:00').getTime();
       const REGISTER_URL = 'https://taebdcnkust-register.vercel.app/';
       const COMING_SOON = 'coming-soon.html';
+      const EVENT_END_URL = 'event-end.html';
       const now = Date.now();
       const btns = document.querySelectorAll('a[data-join-btn]');
-      if (now >= EVENT_START) {
+      if (now >= EVENT_END) {
+        btns.forEach(function (b) { b.setAttribute('href', EVENT_END_URL); });
+      } else if (now >= EVENT_START) {
         btns.forEach(function (b) { b.setAttribute('href', REGISTER_URL); });
       } else {
         btns.forEach(function (b) { b.setAttribute('href', COMING_SOON); });
