@@ -676,18 +676,11 @@
         if(st&&st.signups!=null) elS.textContent=st.signups;
         if(st&&st.books!=null) elB.textContent=st.books;
     }).catch(()=>{});
-    // 點閱數（同一瀏覽器同日只 +1，避免狂刷新灌水）
-    const today=new Date().toISOString().slice(0,10);
+    // 點閱數（每次進頁都 +1，不防灌水）
     (async()=>{
         try{
-            if(localStorage.getItem('ewei_viewed')!==today){
-                const v=await rpc('bump_page_view');
-                if(typeof v==='number'){elV.textContent=v;localStorage.setItem('ewei_views_val',v);}
-                localStorage.setItem('ewei_viewed',today);
-            }else{
-                const v=await rpc('get_page_views');
-                if(typeof v==='number') elV.textContent=v;
-            }
+            const v=await rpc('bump_page_view');
+            if(typeof v==='number') elV.textContent=v;
         }catch(e){}
     })();
     })();
