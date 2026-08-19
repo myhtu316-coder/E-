@@ -632,12 +632,12 @@
     <div class="stat-float" aria-label="活動統計">
         <div class="stat-card stat-signups">
             <span class="stat-emoji">📝</span>
-            <b id="statSignups" class="stat-num">—</b>
+            <b id="statSignups" class="stat-num">0</b>
             <small class="stat-label">人已報名</small>
         </div>
         <div class="stat-card stat-books">
             <span class="stat-emoji">📚</span>
-            <b id="statBooks" class="stat-num">—</b>
+            <b id="statBooks" class="stat-num">0</b>
             <small class="stat-label">本電子書已分享</small>
         </div>
     </div>
@@ -671,11 +671,14 @@
     const elV=document.getElementById('statViews');
     const elS=document.getElementById('statSignups');
     const elB=document.getElementById('statBooks');
-    // 報名數 + 電子書數
+    // 報名數 + 電子書數 (8/24 07:00 起才抓, 之前保持0)
+    const STATS_START = new Date('2026-08-24T07:00:00+08:00').getTime();
+    if (Date.now() >= STATS_START) {
     rpc('get_event_stats').then(st=>{
         if(st&&st.signups!=null) elS.textContent=st.signups;
         if(st&&st.books!=null) elB.textContent=st.books;
     }).catch(()=>{});
+    }
     // 點閱數（每次進頁都 +1，不防灌水）
     (async()=>{
         try{
