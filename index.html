@@ -93,7 +93,8 @@
             0%, 100% { transform: scale(1); opacity: 0.8; filter: blur(2px); }
             50% { transform: scale(1.2); opacity: 1; filter: blur(0px); }
         }
-        .orbit-rotate {
+        .hidden-stat { display: none !important; }
+        .hidden-label { display: none !important; }
             transform-box: fill-box;
             transform-origin: center;
             animation: orbit-ring-spin 16s linear infinite;
@@ -255,7 +256,9 @@
             border-radius: 0;
             mix-blend-mode: multiply;
         }
-    </style>
+        .hidden-stat { display: none !important; }
+    .hidden-label { display: none !important; }
+</style>
 </head>
 <body>
     <div class="cyber-bg" id="starfield"></div>
@@ -632,13 +635,13 @@
     <div class="stat-float" aria-label="活動統計">
         <div class="stat-card stat-signups">
             <span class="stat-emoji">📝</span>
-            <b id="statSignups" class="stat-num">0</b>
-            <small class="stat-label">人已報名</small>
+            <b id="statSignups" class="stat-num hidden-stat">0</b>
+            <small class="stat-label hidden-label">人已報名</small>
         </div>
         <div class="stat-card stat-books">
             <span class="stat-emoji">📚</span>
-            <b id="statBooks" class="stat-num">0</b>
-            <small class="stat-label">本電子書已分享</small>
+            <b id="statBooks" class="stat-num hidden-stat">0</b>
+            <small class="stat-label hidden-label">本電子書已分享</small>
         </div>
     </div>
 
@@ -661,7 +664,7 @@
     <script>
     (function(){
     const SB_URL='https://hjewpxgnxilezpbcjnzr.supabase.co';
-    const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZXdweGdueGlsZXpwYmNqbnpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NjAxODcsImV4cCI6MjA5OTMzNjE4N30.xNPIsnMmnvvgH8PXz6vcwz42S3RwA_ZErlRd1mPA2BE';
+    const SB_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZXdweGdueGlsZXpwYmNqbnpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3NjAxODcsImV4cCI6MjA5OTMzNjE4N30.xNPIsnMmnvvgH8PXz6vcwz42S3RwA_ZErlRd1mPA2BE';
     async function rpc(name){
         const r=await fetch(SB_URL+'/rest/v1/rpc/'+name,{method:'POST',
             headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});
@@ -673,12 +676,41 @@
     const elB=document.getElementById('statBooks');
     // 報名數 + 電子書數 (8/24 07:00 起才抓, 之前保持0)
     const STATS_START = new Date('2026-08-24T07:00:00+08:00').getTime();
-    if (Date.now() >= STATS_START) {
-    rpc('get_event_stats').then(st=>{
-        if(st&&st.signups!=null) elS.textContent=st.signups;
-        if(st&&st.books!=null) elB.textContent=st.books;
-    }).catch(()=>{});
-    }
+    // 直接從 event_signups 表計數（不依賴 get_event_stats RPC，避免 key 問題）
+    (async () => {
+      try {
+        const r = await fetch(SB_URL+'/rest/v1/event_signups?select=id', {
+          method: 'GET',
+          headers: {'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY, 'Prefer': 'count=exact'}
+        });
+        if (r.ok) {
+          const data = await r.json();
+          const count = Array.isArray(data) ? data.length : (data && data.length ? data.length : 0);
+          if (elS) elS.textContent = count;
+        }
+      } catch (e) {}
+      // 書籍數：統計所有報名的 books 陣列長度（簡化：固定為報名數或從 DB 抓）
+      try {
+        const r = await fetch(SB_URL+'/rest/v1/event_signups?select=id', {
+          method: 'GET',
+          headers: {'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY}
+        });
+        // 由於匿名 key 可能無法直接跨表查 books，此處暫以同一計數顯示（或保持 0 直到有書籍數據）
+        // 為確保顯示不為 0，若報名數 > 0 則書籍數也顯示非 0（簡化邏輯：直接從資料庫統計所有書籍）
+        const r2 = await fetch(SB_URL+'/rest/v1/event_signups?select=books', {
+          method: 'GET',
+          headers: {'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY}
+        });
+        if (r2.ok) {
+          const arr = await r2.json();
+          let totalBooks = 0;
+          for (const row of (Array.isArray(arr) ? arr : [])) {
+            if (Array.isArray(row.books)) totalBooks += row.books.length;
+          }
+          if (elB) elB.textContent = totalBooks || 0;
+        }
+      } catch (e) {}
+    })();
     // 點閱數（每次進頁都 +1，不防灌水）
     (async()=>{
         try{
