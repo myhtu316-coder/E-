@@ -225,10 +225,8 @@
         .stat-signups .stat-num { color: var(--neon-cyan); text-shadow: 0 0 14px rgba(34,211,238,0.6); }
         .stat-books .stat-num   { color: #f472b6; text-shadow: 0 0 14px rgba(244,114,182,0.6); }
         .stat-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
-        @media (max-width: 640px) {
-            /* 手機版隱藏統計漂浮框（電腦版照常顯示） */
-            .stat-float { display: none; }
-        }
+        /* 所有裝置隱藏浮動統計面板 */
+        .stat-float { display: none !important; }
         /* Logo Badge Effect - Cyber ID Card Style */
         .logo-badge {
             position: relative;
