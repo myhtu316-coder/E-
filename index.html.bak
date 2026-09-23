@@ -93,13 +93,12 @@
             0%, 100% { transform: scale(1); opacity: 0.8; filter: blur(2px); }
             50% { transform: scale(1.2); opacity: 1; filter: blur(0px); }
         }
-        .orbit-rotate {
+        .hidden-stat { display: none !important; }
+        .hidden-label { display: none !important; }
             transform-box: fill-box;
             transform-origin: center;
             animation: orbit-ring-spin 16s linear infinite;
         }
-        .hidden-stat { display: none !important; }
-        .hidden-label { display: none !important; }
         @keyframes orbit-ring-spin {
             0%   { transform: perspective(120px) rotateX(0deg)    rotateY(0deg)    rotateZ(0deg); }
             100% { transform: perspective(120px) rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg); }
@@ -226,8 +225,10 @@
         .stat-signups .stat-num { color: var(--neon-cyan); text-shadow: 0 0 14px rgba(34,211,238,0.6); }
         .stat-books .stat-num   { color: #f472b6; text-shadow: 0 0 14px rgba(244,114,182,0.6); }
         .stat-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
-        /* 所有裝置隱藏浮動統計面板 */
-        .stat-float { display: none !important; }
+        @media (max-width: 640px) {
+            /* 手機版隱藏統計漂浮框（電腦版照常顯示） */
+            .stat-float { display: none; }
+        }
         /* Logo Badge Effect - Cyber ID Card Style */
         .logo-badge {
             position: relative;
@@ -719,22 +720,6 @@
     })();
     })();
     </script>
-
-    <!-- 注意事項 -->
-    <section style="max-width: 720px; margin: 40px auto; padding: 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #e2e8f0; font-size: 0.9rem; line-height: 1.6;">
-      <h3 style="color: #00f3ff; margin-bottom: 12px; font-size: 1.1rem;">注意事項</h3>
-      <ol style="padding-left: 18px;">
-        <li>報名資料請確實填寫，如有不實，主辦單位保留取消資格之權利。</li>
-        <li>每人限報名一次，重複報名以最早完成基本資料與書本填寫之記錄為準。</li>
-        <li>電子書連結請確認為可公開存取之網址，主辦單位不負責連結失效之問題。</li>
-        <li>心得內容須為本人原創，抄襲或代寫將取消資格。</li>
-        <li>活動獎項依審核結果與抽獎機制決定，主辦單位保留最終解釋權。</li>
-        <li>個人資料僅用於本活動聯繫與統計，不對外公開。</li>
-        <li>報名後如需修改資料，請於活動截止前聯繫主辦單位協助。</li>
-        <li><strong>本次活動依公平、公正原則進行，嚴禁使用程式進行報名活動。</strong></li>
-        <li>若有未盡事宜，以活動網頁公告為準。</li>
-      </ol>
-    </section>
 
     <!-- 參加活動按鈕：8/4 00:00 先切報名頁測試，8/4 12:00 cron 還原回倒數頁(等到 8/24 正式開跑)；11/1 00:00 起改連活動結束頁 -->
     <script>
