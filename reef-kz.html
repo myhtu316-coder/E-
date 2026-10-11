@@ -81,6 +81,7 @@ function kzSave(){
     rec.t=Date.now();
     a.unshift(rec);
     kzSaveData(a);
+  renderKzLog();
     kzRender();
     document.getElementById('kzBak').value='';
     document.getElementById('kzSp').value='';
@@ -115,13 +116,15 @@ function kzEdit(i){
   document.getElementById('kzNote').value=r.note||'';
   a.splice(i,1);
   kzSaveData(a);
+  renderKzLog();
   kzRender();
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
 function kzDelete(i){
   if(confirm('確定刪除此筆 KZ 記錄？')){
     const a=kzLoad();
-    if(i>=0&&i<a.length){a.splice(i,1);kzSaveData(a);kzRender();alert('已刪除');}
+    if(i>=0&&i<a.length){a.splice(i,1);kzSaveData(a);
+  renderKzLog();kzRender();alert('已刪除');}
   }
 }
 function kzClear(){
