@@ -161,6 +161,22 @@ function kzClear(){
 })();
 // 初始化顯示
 if(typeof kzRender==='function')kzRender();
+
+function renderKzLog(){
+  try{
+    const a=JSON.parse(localStorage.getItem('kz_log_v1')||'[]');
+    const box=document.getElementById('kzLog');
+    if(!box)return;
+    if(!a.length){box.innerHTML='<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>';return;}
+    box.innerHTML=a.map((r,i)=>{
+      const parts=[];
+      if(r.bak)parts.push('Bak:'+r.bak+'滴');
+      if(r.sp)parts.push('Sp:'+r.sp+'滴');
+      if(r.s3)parts.push('S3:'+r.s3+'ml');
+      return '<div class="logitem"><b>'+r.d+'</b> '+(r.note?' · '+r.note:'')+'<br><span style="color:var(--cyan);font-weight:600;">'+parts.join(' / ')+'</span><br><span style="float:right;margin-top:4px;"><button onclick="kzEdit('+i+')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button><button onclick="kzDelete('+i+')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button></span></div>';
+    }).join('');
+  }catch(e){console.error('renderKzLog error:',e);if(document.getElementById('kzLog'))document.getElementById('kzLog').innerHTML='<div style="color:var(--pink);">顯示錯誤</div>';}
+}
 </script>
 </body>
 </html>
