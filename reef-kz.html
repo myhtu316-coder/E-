@@ -81,6 +81,7 @@ function kzSave() {
     rec.t = Date.now();
     a.unshift(rec);
     kzSaveData(a);
+  renderKzLog();
     kzRender();
     document.getElementById('kzBak').value = '';
     document.getElementById('kzSp').value = '';
@@ -117,13 +118,15 @@ function kzEdit(i) {
   document.getElementById('kzNote').value = r.note || '';
   a.splice(i, 1);
   kzSaveData(a);
+  renderKzLog();
   kzRender();
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
 function kzDelete(i) {
   if (confirm('確定刪除此筆 KZ 記錄？')) {
     const a = kzLoad();
-    if (i >= 0 && i < a.length) { a.splice(i, 1); kzSaveData(a); kzRender(); alert('已刪除'); }
+    if (i >= 0 && i < a.length) { a.splice(i, 1); kzSaveData(a);
+  renderKzLog(); kzRender(); alert('已刪除'); }
   }
 }
 function kzClear() {
@@ -145,6 +148,22 @@ function kzClear() {
   if (d) { for (var da = 1; da <= 31; da++) { var o = document.createElement('option'); o.value = da < 10 ? '0' + da : da; o.textContent = da + '日'; d.appendChild(o); } d.value = (today.getDate() < 10 ? '0' + today.getDate() : today.getDate().toString()); }
 })();
 if (typeof renderKzLog === 'function') renderKzLog();
+
+function renderKzLog(){
+  try{
+    const a = JSON.parse(localStorage.getItem('kz_log_v1') || '[]');
+    const box = document.getElementById('kzLog');
+    if(!box) return;
+    if(!a.length){box.innerHTML='<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>'; return;}
+    box.innerHTML = a.map(function(r, i){
+      var parts = [];
+      if(r.bak) parts.push('Bak:' + r.bak + '滴');
+      if(r.sp) parts.push('Sp:' + r.sp + '滴');
+      if(r.s3) parts.push('S3:' + r.s3 + 'ml');
+      return '<div class="logitem"><b>' + r.d + '</b> ' + (r.note ? '· ' + r.note : '') + '<br><span style="color:var(--cyan);font-weight:600;">' + parts.join(' / ') + '</span><br><span style="float:right;margin-top:4px;"><button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button><button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button></span></div>';
+    }).join('');
+  }catch(e){console.error('renderKzLog error:', e); if(document.getElementById('kzLog')) document.getElementById('kzLog').innerHTML = '<div style="color:var(--pink);">顯示錯誤</div>'}
+}
 </script>
 </body>
 </html>
