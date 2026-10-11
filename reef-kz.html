@@ -135,6 +135,9 @@ function kzClear(){
   if(s3&&!s3.options.length){
     s3.innerHTML='<option value="">-- 選擇 --</option>';for(let v=1;v<=90;v++){const val=(v/100).toFixed(2);const o=document.createElement('option');o.value=val;o.textContent=val+' ml';s3.appendChild(o);}
   }
+}  if(yEl&&yEl.value===''){yEl.value=yr.toString();}
+  if(mEl&&mEl.value===''){mEl.value=(mo<10?'0'+mo:mo.toString());}
+  if(dEl&&dEl.value===''){dEl.value=(da<10?'0'+da:da.toString());}
 })();
 // 初始化日期下拉
 (function initKzDate(){
