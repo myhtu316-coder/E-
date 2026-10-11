@@ -3,12 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#050b14">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="海水小幫手">
 <title>海水小幫手 | Reef Tools</title>
 <style>
   :root{
@@ -75,205 +69,47 @@
 <div class="wrap">
   <header>
     <h1>🌊 海水小幫手</h1>
-    <p>泡鹽換算・補比重・換水推估・氯化鑭劑量・數據紀錄　手機平板都能點</p>
+    <p>數據紀錄　手機平板都能點</p>
   </header>
 
   <div class="tabs" id="tabs">
     <div class="tab on" data-t="log">數據紀錄</div>
-    <div class="tab" data-t="mix">泡鹽換算</div>
-    <div class="tab" data-t="sg">補比重</div>
-    <div class="tab" data-t="wc">換水推估</div>
-    <div class="tab" data-t="la">氯化鑭</div>
   </div>
-
-  <!-- 泡鹽換算 -->
-  <section id="mix" class="tabpane" style="display:none">
-    <div class="card">
-      <h2>🧂 泡海鹽換算</h2>
-      <label>海鹽品牌</label>
-      <select id="salt"></select>
-      <div class="hint" id="saltSrc"></div>
-
-      <label>目標鹽度 <span id="pptVal">35</span> ppt（≈ sg <span id="sgVal">1.025</span>，可調）</label>
-      <input id="ppt" type="range" min="30" max="40" step="0.5" value="35" style="padding:0">
-
-      <label>自訂係數（g/L，留空用品牌預設）</label>
-      <input id="custCoef" type="number" inputmode="decimal" placeholder="例如 37.9">
-
-      <div class="seg" style="margin-top:14px">
-        <button id="modeVol" class="on">算：幾公升要幾克鹽</button>
-        <button id="modeSalt">算：幾克鹽泡幾公升</button>
-      </div>
-
-      <div id="volBox">
-        <label>目標水量（公升）</label>
-        <select id="vol">
-          <option value="">請選擇水量</option>
-        </select>
-      </div>
-      <div id="saltBox" style="display:none">
-        <label>已有海鹽（克）</label>
-        <input id="saltg" type="number" inputmode="decimal" placeholder="例如 13200">
-      </div>
-
-      <button class="btn" id="mixBtn">算出來！</button>
-      <div class="out" id="mixOut">輸入後按「算出來」～</div>
-      <div class="hint">📌 紅海鹽（你這罐）係數 <b>~37.9</b> g/L（原廠建議 @35ppt）。泡完用機器實測 1.025–1.026 都正常，App 內可隨時改。</div>
-    </div>
-  </section>
-
-  <!-- 補比重 -->
-  <section id="sg" class="tabpane" style="display:none">
-    <div class="card">
-      <h2>⚖️ 補比重計算（雙向）</h2>
-      <label>缸內總水量（公升）</label>
-      <select id="sgVol">
-        <option value="">請選擇水量</option>
-      </select>
-
-      <label>目前比重 sg</label>
-      <select id="sgNow"><option value="">請選擇</option></select>
-
-      <label>目標比重 sg</label>
-      <select id="sgTarget"><option value="">請選擇</option></select>
-
-      <button class="btn" id="sgBtn">算出來！</button>
-      <div class="out" id="sgOut">輸入後按「算出來」～</div>
-      <div class="hint">📌 比重讀值請以校準過的折射計為準。算法為 hobby 級近似：鹽量正比於 (sg−1)，35ppt↔sg1.025。</div>
-    </div>
-  </section>
-
-  <!-- 換水推估 -->
-  <section id="wc" class="tabpane" style="display:none">
-    <div class="card">
-      <h2>💧 換水推估（稀釋計算）</h2>
-      <label>缸總水量（公升）</label>
-      <select id="wcVol">
-        <option value="">請選擇水量</option>
-      </select>
-
-      <div class="seg">
-        <button id="wcModeL" class="on">用「換水量(公升)」</button>
-        <button id="wcModeP">用「換水比例(%)」</button>
-      </div>
-      <div id="wcLBox">
-        <label>本次換水量（公升）</label>
-        <select id="wcL">
-          <option value="">請選擇</option>
-        </select>
-      </div>
-      <div id="wcPBox" style="display:none">
-        <label>換水比例（%）</label>
-        <input id="wcP" type="number" inputmode="decimal" placeholder="例如 11.4">
-      </div>
-
-      <label>要算哪個參數？</label>
-      <select id="wcParam">
-        <option value="PO4" data-unit="mg/L" data-ex="0.346">PO4（磷酸鹽）</option>
-        <option value="NO3" data-unit="mg/L" data-ex="9">NO3（硝酸鹽）</option>
-        <option value="KH" data-unit="dKH" data-ex="8" data-salt="1">KH（碳酸鹼度）</option>
-        <option value="Ca" data-unit="ppm" data-ex="420" data-salt="1">Ca（鈣）</option>
-        <option value="Mg" data-unit="ppm" data-ex="1300" data-salt="1">Mg（鎂）</option>
-      </select>
-
-      <div id="wcSaltBox" style="display:none">
-        <label>新水用哪牌海鹽？（自動帶入新水 Ca/Mg/KH 固定值）</label>
-        <select id="wcSalt"></select>
-        <div class="hint" id="wcSaltSrc"></div>
-      </div>
-
-      <label id="wcBeforeLbl">換水前 PO4 濃度（缸內舊水，mg/L）</label>
-      <input id="wcBefore" type="number" inputmode="decimal" placeholder="例如 0.346 (PO4 mg/L)">
-
-      <label id="wcNewLbl" for="wcNew">新水濃度（預設 0）</label>
-      <input id="wcNew" type="number" inputmode="decimal" placeholder="0">
-
-      <button class="btn" id="wcBtn">推估！</button>
-      <div class="out" id="wcOut">輸入後按「推估」～</div>
-      <div class="hint">📌 公式：換水後 = 換水前×(1−比例) + 新水×比例。例：350L 換 40L、PO4 換水前 0.346 → 約 0.307。</div>
-    </div>
-  </section>
-
-  <!-- 氯化鑭劑量 -->
-  <section id="la" class="tabpane" style="display:none">
-    <div class="card">
-      <h2>⚗️ 氯化鑭劑量計算</h2>
-
-      <label>缸總水量（公升）</label>
-      <select id="laVol">
-        <option value="">請選擇水量</option>
-      </select>
-
-      <div class="seg" style="margin-top:14px">
-        <button id="laModeD" class="on">用「想降多少 PO4」</button>
-        <button id="laModeT">用「目前 → 目標」</button>
-      </div>
-
-      <div id="laDBox">
-        <label>想降低的 PO4（mg/L）</label>
-        <input id="laDrop" type="number" inputmode="decimal" placeholder="例如 0.05">
-      </div>
-      <div id="laTBox" style="display:none">
-        <div class="row">
-          <div><label>目前 PO4 (mg/L)</label><input id="laBefore" type="number" inputmode="decimal" placeholder="例如 0.307"></div>
-          <div><label>目標 PO4 (mg/L)</label><input id="laTarget" type="number" inputmode="decimal" placeholder="例如 0.257"></div>
-        </div>
-      </div>
-
-      <label>母液型態</label>
-      <select id="laType">
-        <option value="hept">七水合氯化鑭 LaCl₃·7H₂O（粉劑常見）</option>
-        <option value="anhy">無水氯化鑭 LaCl₃</option>
-      </select>
-
-      <label>母液濃度（每 1000ml 含幾克固體）</label>
-      <input id="laConc" type="number" inputmode="decimal" placeholder="哥哥這罐 4:1000 → 填 4">
-
-      <label>滴定機流速（每小時幾 ml；哥哥這罐 1ml/h）</label>
-      <input id="laRate" type="number" inputmode="decimal" value="1" placeholder="例如 1">
-
-      <label>每天加幾 ml（含滴定總量，例如 17）</label>
-      <input id="laPerDay" type="number" inputmode="decimal" placeholder="例如 17">
-
-      <button class="btn" id="laBtn">算要加幾 ml</button>
-      <div class="out" id="laOut">輸入後按「算要加幾 ml」～</div>
-      <div class="hint">📌 算法：降 X mg/L × 缸量 = 需移除 PO4 總重；鑭:磷酸根 = 1:1（莫耳比）。<br>
-      ⚠️ 這是<b>理論量</b>！實缸會被碳酸根等消耗、要多加一點；但鑭會沉積難清除，<b>請分 2–3 天、加到水流最強處，別一次倒完</b>，也別把 PO4 打到 0。</div>
-    </div>
-  </section>
 
   <!-- 數據紀錄 -->
   <section id="log" class="tabpane">
     <div class="card">
       <h2>📋 水質數據紀錄</h2>
       <div class="row">
-        <div style="flex:1 1 100%">
-          <label>日期</label>
-          <div class="row" style="margin-top:4px;gap:6px">
-            <select id="lYear"></select>
-            <select id="lMonth"></select>
-            <select id="lDay"></select>
-          </div>
+        <div><label>日期</label><input id="lDate" type="date"></div>
+        <div><label>水溫 (°C)</label><input id="lTemp" type="number" inputmode="decimal" placeholder="25"></div>
+      </div>
+      <div class="row">
+        <div><label>KH (dKH)</label><input id="lKH" type="number" inputmode="decimal"></div>
+        <div><label>Ca (mg/L)</label><input id="lCa" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>Mg (mg/L)</label><input id="lMg" type="number" inputmode="decimal"></div>
+        <div><label>NO3 (mg/L)</label><input id="lNO3" type="number" inputmode="decimal"></div>
+      </div>
+      <div class="row">
+        <div><label>PO4 (mg/L)<span class="tag">換水前</span></label><input id="lPO4" type="number" inputmode="decimal"></div>
+        <div><label>比重 sg</label><input id="lSG" type="number" inputmode="decimal" step="0.001"></div>
+      </div>
+      <div class="row">
+        <div><label>滴定機模式</label>
+          <select id="lDripMode">
+            <option value="">-- 請選擇 --</option>
+            <option value="KZ_Bak">KZ Bak: 1~10 滴</option>
+            <option value="Kz_Sp">Kz Sp: 1~10 滴</option>
+            <option value="Kz_S3">Kz S3: 0.1~0.9 ml</option>
+          </select>
         </div>
-      </div>
-      <div class="row">
-        <div class="fld"><label>水溫 (°C)</label><select id="lTemp"></select><input id="lTempC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-        <div class="fld"><label>KH (dKH)</label><select id="lKH"></select><input id="lKHC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-      </div>
-      <div class="row">
-        <div class="fld"><label>Ca (mg/L)</label><select id="lCa"></select><input id="lCaC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-        <div class="fld"><label>Mg (mg/L)</label><select id="lMg"></select><input id="lMgC" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-      </div>
-      <div class="row">
-        <div class="fld"><label>NO3 (mg/L)</label><select id="lNO3"></select><input id="lNO3C" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-        <div class="fld"><label>PO4 (mg/L)<span class="tag">換水前</span></label><select id="lPO4"></select><input id="lPO4C" class="custom" type="number" inputmode="decimal" placeholder="自填" style="display:none"></div>
-      </div>
-      <div class="row">
-        <div class="fld"><label>比重 sg</label><select id="lSG"></select><input id="lSGC" class="custom" type="number" inputmode="decimal" step="0.001" placeholder="自填" style="display:none"></div>
       </div>
       <label>備註</label>
       <input id="lNote" type="text" placeholder="例如 換水40L / 加鹽調比重">
       <button class="btn" id="logBtn">存一筆</button>
+      <button class="btn ghost" id="logCancel" style="display:none;margin-top:8px">取消編輯</button>
       <div class="hint">⚠️ PO4 等數值一律記「換水前（BEFORE）」測量的，跟哥哥習慣一致。</div>
     </div>
 
@@ -284,24 +120,6 @@
       <input id="impFile" type="file" accept=".csv,text/csv" style="display:none">
       <button class="btn ghost" id="clrBtn" style="margin-top:8px">清空全部</button>
       <div id="logList"></div>
-    </div>
-
-    <div class="card">
-      <h2>☁️ 同步設定</h2>
-      <label>GitHub 個人存取權杖（PAT）</label>
-      <input id="syncToken" type="password" placeholder="貼上你的 classic PAT（需要 repo 權限）" autocomplete="off">
-      <div class="hint">🔐 建法：GitHub 網頁 → 右上頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token（勾 <b>repo</b>）→ 複製貼這裡。只存在你這台手機，不會寫進任何程式碼。</div>
-
-      <label style="margin-top:14px">同步狀態</label>
-      <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
-
-      <div class="row" style="margin-top:14px">
-        <button class="btn" id="syncNowBtn">立即同步</button>
-        <button class="btn ghost" id="syncTestBtn">測試連線</button>
-      </div>
-
-      <button class="btn ghost" id="autoSyncBtn" style="margin-top:14px">自動同步：關</button>
-      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到雲端私人倉庫 <b>myhtu316-coder/reef-sync</b>，換手機也不怕不見。</div>
     </div>
   </section>
 
@@ -324,7 +142,7 @@ const SALTS = [
 /* ===== 新水固定值表（海鹽泡好後的典型 Ca/Mg/KH @35ppt，原廠典型值）=====
    PO4/NO3 海鹽本就≈0，不列入，換水推估時新水直接視為 0 */
 const NEWWATER = {
-  rss:  {Ca:430, Mg:1310, KH:8.0,  src:'Red Sea Salt 桶身標籤（MIXED REEF/SPS DOMINANT @35ppt）'},
+  rss:  {Ca:440, Mg:1320, KH:8.0,  src:'Red Sea Salt 原廠典型值 @35ppt'},
   rscp: {Ca:490, Mg:1400, KH:11.0, src:'Red Sea Coral Pro 原廠手冊 @35ppt'},
   io:   {Ca:420, Mg:1320, KH:8.0,  src:'Instant Ocean 原廠典型值 @35ppt'},
   rc:   {Ca:500, Mg:1450, KH:12.0, src:'Reef Crystals 原廠典型值 @35ppt'},
@@ -344,441 +162,103 @@ tabs.addEventListener('click',e=>{
   document.getElementById(t.dataset.t).style.display='block';
 });
 
-/* ===== 初始化品牌下拉 ===== */
-const saltSel=document.getElementById('salt');
-SALTS.forEach(s=>{
-  const o=document.createElement('option');o.value=s.id;o.textContent=s.name;saltSel.appendChild(o);
-});
-const saltSrc=document.getElementById('saltSrc');
-function updSrc(){
-  const s=SALTS.find(x=>x.id===saltSel.value);
-  const cust=document.getElementById('custCoef').value;
-  saltSrc.innerHTML=`預設係數 <b style="color:var(--green)">${s.gpl}</b> g/L　<span class="badge">${s.src}</span>`+
-    (cust?`　｜　自訂 <b style="color:var(--pink)">${cust}</b> g/L 生效`:'');
-}
-saltSel.addEventListener('change',updSrc);
-document.getElementById('custCoef').addEventListener('input',updSrc);
-updSrc();
-
-/* ppt 滑桿 */
-const ppt=document.getElementById('ppt'), pptVal=document.getElementById('pptVal');
-ppt.addEventListener('input',()=>{
-  pptVal.textContent=ppt.value;
-  document.getElementById('sgVal').textContent=(1+(ppt.value/35)*0.025).toFixed(4);
-});
-
-/* 泡鹽 模式切換 */
-let mixMode='vol';
-const bV=document.getElementById('modeVol'), bS=document.getElementById('modeSalt');
-bV.onclick=()=>{mixMode='vol';bV.classList.add('on');bS.classList.remove('on');
-  document.getElementById('volBox').style.display='block';document.getElementById('saltBox').style.display='none';};
-bS.onclick=()=>{mixMode='salt';bS.classList.add('on');bV.classList.remove('on');
-  document.getElementById('volBox').style.display='none';document.getElementById('saltBox').style.display='block';};
-
-document.getElementById('mixBtn').onclick=()=>{
-  const s=SALTS.find(x=>x.id===saltSel.value);
-  const cust=parseFloat(document.getElementById('custCoef').value);
-  const coef=(!isNaN(cust)&&cust>0)?cust:s.gpl;
-  const pptv=parseFloat(ppt.value)||35;
-  const factor=pptv/35; // 線性近似
-  const out=document.getElementById('mixOut');
-  if(mixMode==='vol'){
-    const vol=window.getVolValue?window.getVolValue():parseFloat(document.getElementById('vol').value);
-    if(!vol||vol<=0){out.textContent='請輸入水量（公升）';return;}
-    const g=vol*coef*factor;
-    const sgShow=(1+(pptv/35)*0.025).toFixed(4);
-    out.innerHTML=`目標 <b>${vol}</b> 公升、sg <b>${sgShow}</b>（${pptv} ppt）<br>需要海鹽約 <b>${g.toFixed(1)}</b> 克`+
-      (cust?'（自訂係數）':'（'+s.name+'）');
-  }else{
-    const sg=parseFloat(document.getElementById('saltg').value);
-    if(!sg||sg<=0){out.textContent='請輸入海鹽克數';return;}
-    const vol=sg/(coef*factor);
-    const sgShow=(1+(pptv/35)*0.025).toFixed(4);
-    out.innerHTML=`海鹽 <b>${sg}</b> 克、sg <b>${sgShow}</b>（${pptv} ppt）<br>可泡約 <b>${vol.toFixed(1)}</b> 公升`+
-      (cust?'（自訂係數）':'（'+s.name+'）');
-  }
-};
-
-/* ===== 補比重 ===== */
-// 動態填充下拉：水量（50L 為一階）與比重選項
-(function(){
-  const vol=document.getElementById('sgVol');
-  for(let v=50; v<=1000; v+=50){
-    const o=document.createElement('option');
-    o.value=v; o.textContent=v+' L';
-    vol.appendChild(o);
-  }
-  // === 全站通用「缸/目標水量」下拉（50L 階，上限 1000L）：換水 wcVol / 氯化鑭 laVol ===
-  ['wcVol','laVol'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    for(let v=50; v<=1000; v+=50){
-      const o=document.createElement('option');
-      o.value=v; o.textContent=v+' L';
-      el.appendChild(o);
-    }
-  });
-
-// === 泡鹽換算專用：目標水量 vol（5L 階，上限 200L + 自訂）===
-  (function(){
-    const vol=document.getElementById('vol');
-    if(!vol) return;
-    // 5L 到 200L
-    for(let v=5; v<=200; v+=5){
-      const o=document.createElement('option');
-      o.value=v; o.textContent=v+' L';
-      vol.appendChild(o);
-    }
-    // 自訂選項
-    const custom=document.createElement('option');
-    custom.value='__custom__'; custom.textContent='✎ 自訂水量…';
-    vol.appendChild(custom);
-
-    // 自訂輸入框（隱藏，選「自訂」時顯示）
-    const customInput=document.createElement('input');
-    customInput.type='number';
-    customInput.id='volCustom';
-    customInput.inputMode='decimal';
-    customInput.placeholder='輸入公升數（如 37.5）';
-    customInput.step='0.5';
-    customInput.min='0.5';
-    customInput.style.cssText='width:100%;margin-top:8px;padding:12px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:#08111f;color:var(--txt);display:none';
-    vol.parentNode.insertBefore(customInput, vol.nextSibling);
-
-    // 切換顯示/隱藏
-    vol.onchange=()=>{
-      if(vol.value==='__custom__'){
-        customInput.style.display='';
-        customInput.focus();
-      }else{
-        customInput.style.display='none';
-        customInput.value='';
-      }
-    };
-
-    // 取值 helper（供計算按鈕用）
-    window.getVolValue=()=>{
-      if(vol.value==='__custom__'){
-        const v=parseFloat(customInput.value);
-        return (v && v>0) ? v : null;
-      }
-      return vol.value ? parseFloat(vol.value) : null;
-    };
-  })();
-  // 換水推估「本次換水量」特例：5L 為一階（哥哥指定）
-  const wcL=document.getElementById('wcL');
-  if(wcL){
-    for(let v=5; v<=500; v+=5){
-      const o=document.createElement('option');
-      o.value=v; o.textContent=v+' L';
-      wcL.appendChild(o);
-    }
-  }
-  const sgNow=document.getElementById('sgNow');
-  const sgTarget=document.getElementById('sgTarget');
-  for(let s=1.020; s<=1.032; s+=0.001){
-    const v=s.toFixed(3);
-    sgNow.appendChild(new Option(v, v));
-    sgTarget.appendChild(new Option(v, v));
-  }
-})();
-document.getElementById('sgBtn').onclick=()=>{
-  const V=parseFloat(document.getElementById('sgVol').value);
-  const s1=parseFloat(document.getElementById('sgNow').value);
-  const s2=parseFloat(document.getElementById('sgTarget').value);
-  const out=document.getElementById('sgOut');
-  if(!V||!s1||!s2){out.textContent='請選 水量 / 目前sg / 目標sg';return;}
-  const K=1400; // 35ppt / (1.025-1) ≈ 1400 g/L per (sg-1)
-  if(Math.abs(s1-s2)<0.0005){out.innerHTML='目前比重已等於目標，不用調整 ✅';return;}
-  if(s1>s2){
-    const addW=V*((s1-s2)/(s2-1)); // 加純水降比重
-    out.innerHTML=`比重偏高，需加 <b>RO 純水 ${addW.toFixed(1)}</b> 公升<br>`+
-      `<span class="hint">降回 sg ${s2}（${V}L 缸）</span>`;
-  }else{
-    const addS=V*K*(s2-s1); // 補鹽升比重
-    out.innerHTML=`比重偏低，需補 <b>海鹽約 ${addS.toFixed(1)}</b> 克<br>`+
-      `<span class="hint">升回 sg ${s2}（${V}L 缸，係數 ${K}）</span>`;
-  }
-};
-
-/* ===== 換水推估 ===== */
-let wcMode='L';
-const wL=document.getElementById('wcModeL'), wP=document.getElementById('wcModeP');
-wL.onclick=()=>{wcMode='L';wL.classList.add('on');wP.classList.remove('on');
-  document.getElementById('wcLBox').style.display='block';document.getElementById('wcPBox').style.display='none';};
-wP.onclick=()=>{wcMode='P';wP.classList.add('on');wL.classList.remove('on');
-  document.getElementById('wcLBox').style.display='none';document.getElementById('wcPBox').style.display='block';};
-// 換水參數下拉：切換 label/placeholder/單位 + 海鹽新水聯動
-const wcParam=document.getElementById('wcParam');
-const wcBeforeLbl=document.getElementById('wcBeforeLbl');
-const wcBeforeInput=document.getElementById('wcBefore');
-const wcNewLbl=document.getElementById('wcNewLbl');
-const wcNewInput=document.getElementById('wcNew');
-const wcSaltBox=document.getElementById('wcSaltBox');
-const wcSalt=document.getElementById('wcSalt');
-const wcSaltSrc=document.getElementById('wcSaltSrc');
-// 填入海鹽下拉選項
-SALTS.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;wcSalt.appendChild(o);});
-function syncWcParam(){
-  const o=wcParam.options[wcParam.selectedIndex];
-  const name=o.value, unit=o.dataset.unit, ex=o.dataset.ex;
-  wcBeforeLbl.textContent=`換水前 ${name} 濃度（缸內舊水，${unit}）`;
-  wcBeforeInput.placeholder=`例如 ${ex} (${name} ${unit})`;
-  if(o.dataset.salt==='1'){
-    // KH/Ca/Mg：新水濃度依海鹽固定值
-    wcSaltBox.style.display='block';
-    syncWcSalt();
-  }else{
-    // PO4/NO3：海鹽本就≈0，新水直接當 0
-    wcSaltBox.style.display='none';
-    wcNewInput.value='0'; wcNewInput.disabled=false;
-    wcNewInput.placeholder='0（海鹽不含 PO4/NO3）';
-    if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（海鹽≈0，${unit}）`;
-  }
-}
-function syncWcSalt(){
-  const o=wcParam.options[wcParam.selectedIndex];
-  const name=o.value, unit=o.dataset.unit;
-  const sid=wcSalt.value;
-  const nw=NEWWATER[sid];
-  const val = nw ? nw[name] : '';
-  const src = nw ? nw.src : '';
-  wcNewInput.value = (val==='' ? '' : val);
-  wcNewInput.disabled=true; // 自動帶入，不讓手填避免誤改
-  if(wcNewLbl) wcNewLbl.textContent=`新水${name}濃度（依 ${wcSalt.options[wcSalt.selectedIndex].textContent.split('（')[0]} 自動帶入：${val} ${unit}）`;
-  wcSaltSrc.textContent = src ? `📌 ${src}` : '';
-}
-wcParam.onchange=syncWcParam;
-wcSalt.onchange=syncWcSalt;
-syncWcParam();
-
-document.getElementById('wcBtn').onclick=()=>{
-  const V=parseFloat(document.getElementById('wcVol').value);
-  const before=parseFloat(document.getElementById('wcBefore').value);
-  let nw=parseFloat(document.getElementById('wcNew').value); if(isNaN(nw))nw=0;
-  const pname=wcParam.options[wcParam.selectedIndex].value;
-  const punit=wcParam.options[wcParam.selectedIndex].dataset.unit;
-  let f;
-  if(wcMode==='L'){const L=parseFloat(document.getElementById('wcL').value);
-    if(!V||!L){document.getElementById('wcOut').textContent='請填 缸水量 與 換水量';return;}
-    f=L/V;
-  }else{const P=parseFloat(document.getElementById('wcP').value);
-    if(!V||!P){document.getElementById('wcOut').textContent='請填 缸水量 與 換水比例';return;}
-    f=P/100;
-  }
-  if(f<0||f>1){document.getElementById('wcOut').textContent='換水比例需在 0–100%';return;}
-  const after=before*(1-f)+nw*f;
-  document.getElementById('wcOut').innerHTML=
-    `換水比例 <b>${(f*100).toFixed(1)}%</b><br>`+
-    `換水前 ${pname} <b>${before}</b> ${punit} → 換水後約 <b>${after.toFixed(4)}</b> ${punit}`;
-};
-
-/* ===== 氯化鑭劑量 ===== */
-let laMode='drop';
-const lD=document.getElementById('laModeD'), lT=document.getElementById('laModeT');
-lD.onclick=()=>{laMode='drop';lD.classList.add('on');lT.classList.remove('on');
-  document.getElementById('laDBox').style.display='block';document.getElementById('laTBox').style.display='none';};
-lT.onclick=()=>{laMode='target';lT.classList.add('on');lD.classList.remove('on');
-  document.getElementById('laDBox').style.display='none';document.getElementById('laTBox').style.display='block';};
-document.getElementById('laBtn').onclick=()=>{
-  const V=parseFloat(document.getElementById('laVol').value);
-  const conc=parseFloat(document.getElementById('laConc').value);
-  const rate=parseFloat(document.getElementById('laRate').value)||1;
-  const isHept=document.getElementById('laType').value==='hept';
-  const out=document.getElementById('laOut');
-  if(!V||V<=0){out.textContent='請填缸總水量（公升）';return;}
-  if(!conc||conc<=0){out.textContent='請填母液濃度（每公升幾克固體）';return;}
-  const drop = laMode==='drop'
-    ? parseFloat(document.getElementById('laDrop').value)
-    : (parseFloat(document.getElementById('laBefore').value)-parseFloat(document.getElementById('laTarget').value));
-  if(!drop||drop<=0){out.textContent='請填有效的降低幅度（需 > 0）';return;}
-
-  const po4g = drop * V;                 // 要移除的 PO4 總重 (mg)
-  const molPO4 = po4g/1000/94.97;        // 莫耳數
-  const molLa = molPO4;                  // 1:1
-  const laMass = molLa*138.905;         // 鑭金屬總重 (g)，與型態無關
-  const laInConc = isHept ? conc*0.374 : conc*0.566;    // 每公升母液含鑭金屬 (g)
-  const ml = laMass/laInConc*1000;       // 母液體積 (ml)
-
-  // 分次 / 滴定建議
-  const per = ml/3;
-  const perDay = parseFloat(document.getElementById('laPerDay').value);
-  // 滴定：每天機器需跑幾小時 = 每日劑量 ÷ 流速
-  let dripTxt='';
-  if(rate>0 && perDay>0){
-    const runH = perDay/rate;
-    dripTxt = `｜　滴定機 ${rate}ml/h 每天跑 <b>${runH.toFixed(1)}</b> 小時即可滴完當日 ${perDay}ml（匀速最穩）`;
-  } else if(rate>0){
-    const hrs = ml/rate;
-    dripTxt = `｜　滴定機 ${rate}ml/h 約 <b>${hrs.toFixed(1)}</b> 小時滴完總量`;
-  }
-  let daysTxt='';
-  if(perDay>0){
-    const days = ml/perDay;
-    daysTxt = `<br><span class="hint">📅 若每天加 <b>${perDay}</b> ml，共需約 <b>${days.toFixed(1)}</b> 天、總母液 <b>${(perDay*days).toFixed(1)}</b> ml（實際每 2–3 天測一次，到了就收手，別硬打到 0）。</span>`;
-  }
-  out.innerHTML=
-    `缸 <b>${V}</b> L，降 PO4 <b>${drop}</b> mg/L<br>`+
-    `需移除 PO4 ≈ <b>${(po4g/1000).toFixed(3)}</b> g　｜　需鑭金屬 ≈ <b>${laMass.toFixed(3)}</b> g<br>`+
-    `母液（${isHept?'七水合':'無水'}，濃度 ${conc} g/L）需 <b style="font-size:20px;color:var(--green)">${ml.toFixed(1)}</b> ml`+
-    `<br><span class="hint">⚠️ 理論量，建議分 3 天加：每天約 <b>${per.toFixed(1)}</b> ml，加到水流最強處，加完隔天再測，寧可少加別一次倒完。${dripTxt}</span>${daysTxt}`;
-};
-
 /* ===== 數據紀錄 ===== */
 const KEY='reef_log_v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
 function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
-function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-// 舊紀錄補上 id / mtime（每裝置只跑一次，之後 id 就穩定可跨裝置合併）
-(function migrate(){
-  const a=load();let ch=false;
-  a.forEach(r=>{if(!r.id){r.id=newId();ch=true}if(!r.mtime){r.mtime=Date.now();ch=true}});
-  if(ch)save(a);
-})();
-/* 日期：年/月/日 三下拉 */
-function pad2(n){return String(n).padStart(2,'0');}
-function fillYear(){const s=document.getElementById('lYear');const y0=2020,y1=new Date().getFullYear()+1;s.innerHTML='';for(let y=y1;y>=y0;y--)s.insertAdjacentHTML('beforeend','<option value="'+y+'">'+y+'年</option>');}
-function fillMonth(){const s=document.getElementById('lMonth');s.innerHTML='';for(let m=1;m<=12;m++)s.insertAdjacentHTML('beforeend','<option value="'+pad2(m)+'">'+m+'月</option>');}
-function fillDay(){const s=document.getElementById('lDay');const y=+document.getElementById('lYear').value;const m=+document.getElementById('lMonth').value;const dim=new Date(y,m,0).getDate();const cur=+s.value||1;s.innerHTML='';for(let d=1;d<=dim;d++)s.insertAdjacentHTML('beforeend','<option value="'+pad2(d)+'">'+d+'日</option>');s.value=pad2(cur>dim?dim:cur);}
-function getLDate(){return document.getElementById('lYear').value+'-'+document.getElementById('lMonth').value+'-'+document.getElementById('lDay').value;}
-function setLDate(str){if(!str){resetLDate();return;}const p=String(str).split('-');if(p.length<3){resetLDate();return;}document.getElementById('lYear').value=p[0];document.getElementById('lMonth').value=p[1];fillDay();document.getElementById('lDay').value=p[2];}
-function resetLDate(){const t=new Date();document.getElementById('lYear').value=t.getFullYear();document.getElementById('lMonth').value=pad2(t.getMonth()+1);fillDay();document.getElementById('lDay').value=pad2(t.getDate());}
-fillYear();fillMonth();fillDay();resetLDate();
-document.getElementById('lYear').onchange=fillDay;
-document.getElementById('lMonth').onchange=fillDay;
-/* 數值欄位下拉工廠 */
-const NUM_FIELDS=[
-  {id:'lTemp',min:15,max:35,step:0.5,unit:'°C'},
-  {id:'lKH',min:2,max:20,step:0.5,unit:'dKH'},
-  {id:'lCa',min:300,max:600,step:5,unit:'mg/L'},
-  {id:'lMg',min:900,max:1800,step:10,unit:'mg/L'},
-  {id:'lNO3',min:0,max:60,step:1,unit:'mg/L'},
-  {id:'lPO4',min:0,max:0.613,step:0.05,unit:'mg/L'},
-  {id:'lSG',min:1.018,max:1.030,step:0.001,unit:''}
-];
-function fmtNum(v){return (Math.round(v*1000)/1000).toString();}
-function fillNum(f){
-  const s=document.getElementById(f.id);
-  let h='<option value="">（不填）</option>';
-  for(let v=f.min;v<=f.max+1e-9;v+=f.step){
-    const sv=fmtNum(v);
-    h+='<option value="'+sv+'">'+sv+(f.unit?(' '+f.unit):'')+'</option>';
-  }
-  h+='<option value="__custom__">✎ 其他…</option>';
-  s.innerHTML=h;
-  s.onchange=()=>{
-    const c=document.getElementById(f.id+'C');
-    if(s.value==='__custom__'){c.style.display='';c.focus();}else{c.style.display='none';c.value='';}
-  };
-}
-function getNum(id){
-  const s=document.getElementById(id);
-  if(s.value==='__custom__'){return (document.getElementById(id+'C').value||'').trim();}
-  return s.value;
-}
-function setNum(id,val){
-  const s=document.getElementById(id),c=document.getElementById(id+'C');
-  if(val===''||val===null||val===undefined){s.value='';c.style.display='none';c.value='';return;}
-  const opts=[...s.options].map(o=>o.value);
-  if(opts.includes(String(val))||opts.includes(Number(val).toString())){s.value=String(val);c.style.display='none';c.value='';}
-  else{s.value='__custom__';c.style.display='';c.value=val;}
-}
-NUM_FIELDS.forEach(fillNum);
-/* 取消編輯按鈕：編輯時才出現 */
-(function(){const b=document.createElement('button');b.className='btn ghost';b.id='logCancel';b.textContent='取消編輯';b.style.display='none';b.style.marginTop='8px';document.getElementById('logBtn').insertAdjacentElement('afterend',b);b.onclick=resetForm;})();
-function resetNums(){NUM_FIELDS.forEach(f=>setNum(f.id,''));}
-function resetForm(){resetLDate();resetNums();document.getElementById('lNote').value='';editIdx=null;document.getElementById('logBtn').textContent='存一筆';document.getElementById('logCancel').style.display='none';}
+document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
 let editIdx=null;  // 編輯中筆數索引（null=新增模式）
 document.getElementById('logBtn').onclick=()=>{
   const rec={
-    d:getLDate(),
-    temp:getNum('lTemp'),
-    kh:getNum('lKH'),
-    ca:getNum('lCa'),
-    mg:getNum('lMg'),
-    no3:getNum('lNO3'),
-    po4:getNum('lPO4'),
-    sg:getNum('lSG'),
+    d:document.getElementById('lDate').value,
+    temp:document.getElementById('lTemp').value,
+    kh:document.getElementById('lKH').value,
+    ca:document.getElementById('lCa').value,
+    mg:document.getElementById('lMg').value,
+    no3:document.getElementById('lNO3').value,
+    po4:document.getElementById('lPO4').value,
+    sg:document.getElementById('lSG').value,
+    dripMode:document.getElementById('lDripMode').value,
     note:document.getElementById('lNote').value
   };
   const a=load();
   if(editIdx!==null){
-    // 編輯模式：保留原筆的 id / mtime，直接覆蓋
-    rec.id=a[editIdx].id||newId();
-    rec.mtime=a[editIdx].mtime||Date.now();
+    // 編輯模式：直接覆蓋原筆
     a[editIdx]=rec;
     editIdx=null;
     document.getElementById('logBtn').textContent='存一筆';
     document.getElementById('logCancel').style.display='none';
   }else{
-    rec.id=newId();
-    rec.mtime=Date.now();
     a.unshift(rec);
   }
-  save(a);renderLog();maybeAutoSync();
-  resetForm();
+  save(a);renderLog();
+  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lDripMode','lNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
 };
-function load(){try{const a=JSON.parse(localStorage.getItem(KEY))||[];return a.sort((x,y)=>{const dx=(x.d||'').toString(),dy=(y.d||'').toString();if(dx!==dy)return dx<dy?1:-1;return (y.mtime||0)-(x.mtime||0);});}catch(e){return[]}}
+document.getElementById('logCancel').onclick=()=>{
+  editIdx=null;
+  document.getElementById('logBtn').textContent='存一筆';
+  document.getElementById('logCancel').style.display='none';
+  ['lTemp','lKH','lCa','lMg','lNO3','lPO4','lSG','lDripMode','lNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lDate').value=new Date().toISOString().slice(0,10);
+};
 function renderLog(){
   const a=load();const box=document.getElementById('logList');
   if(!a.length){box.innerHTML='<div class="hint">還沒紀錄～</div>';return;}
   box.innerHTML=a.map((r,i)=>{
     const cells=[['KH',r.kh],['Ca',r.ca],['Mg',r.mg],['NO3',r.no3],['PO4',r.po4],['sg',r.sg],['°C',r.temp],['La',r.la],['Vodka',r.vodka]]
       .filter(c=>c[1]).map(c=>`${c[0]}:${c[1]}`).join(' ｜ ');
+    const dripCell=r.dripMode?`滴定:${r.dripMode}`.replace('_',' '):'';
     return `<div class="logitem"><span class="del" data-i="${i}">刪除</span>`+
       `<span class="edit" data-i="${i}">編輯</span>`+
-      `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
+      `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells}${cells&&dripCell?' ｜ ':''}${dripCell}</span></div>`;
   }).join('');
   box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{
-    const arr=load();const removed=arr.splice(+b.dataset.i,1)[0];save(arr);
-    if(removed&&removed.id)addDeleted(removed.id);
-    renderLog();maybeAutoSync();
+    const arr=load();arr.splice(+b.dataset.i,1);save(arr);renderLog();
   });
   box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>{
     const arr=load();const r=arr[+b.dataset.i];if(!r)return;
     editIdx=+b.dataset.i;
-    setLDate(r.d||'');
-    setNum('lTemp',r.temp||'');
-    setNum('lKH',r.kh||'');
-    setNum('lCa',r.ca||'');
-    setNum('lMg',r.mg||'');
-    setNum('lNO3',r.no3||'');
-    setNum('lPO4',r.po4||'');
-    setNum('lSG',r.sg||'');
+    document.getElementById('lDate').value=r.d||'';
+    document.getElementById('lTemp').value=r.temp||'';
+    document.getElementById('lKH').value=r.kh||'';
+    document.getElementById('lCa').value=r.ca||'';
+    document.getElementById('lMg').value=r.mg||'';
+    document.getElementById('lNO3').value=r.no3||'';
+    document.getElementById('lPO4').value=r.po4||'';
+    document.getElementById('lSG').value=r.sg||'';
+    document.getElementById('lDripMode').value=r.dripMode||'';
     document.getElementById('lNote').value=r.note||'';
     document.getElementById('logBtn').textContent='更新這筆';
     document.getElementById('logCancel').style.display='inline-block';
-    document.getElementById('lYear').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('lDate').scrollIntoView({behavior:'smooth',block:'center'});
   });
 }
 document.getElementById('expBtn').onclick=()=>{
   const a=load();if(!a.length){alert('沒有資料可匯出');return;}
-  const head=['日期','水溫','KH','Ca','Mg','NO3','PO4_換水前','比重','備註'];
-  const rows=a.map(r=>[r.d,r.temp,r.kh,r.ca,r.mg,r.no3,r.po4,r.sg,r.note].join(','));
+  const head=['日期','水溫','KH','Ca','Mg','NO3','PO4_換水前','比重','滴定模式','備註'];
+  const rows=a.map(r=>[r.d,r.temp,r.kh,r.ca,r.mg,r.no3,r.po4,r.sg,r.dripMode,r.note].join(','));
   const csv='\uFEFF'+head.join(',')+'\n'+rows.join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const u=URL.createObjectURL(blob);const a2=document.createElement('a');
   a2.href=u;a2.download='reef_log.csv';a2.click();URL.revokeObjectURL(u);
 };
 document.getElementById('clrBtn').onclick=()=>{
-  if(confirm('確定清空全部紀錄？（會同步標記刪除，雲端也會一併清掉）')){
-    load().forEach(r=>{if(r&&r.id)addDeleted(r.id)});
-    localStorage.removeItem(KEY);renderLog();
-    if(getToken())doSync();
-  }
+  if(confirm('確定清空全部紀錄？')){localStorage.removeItem(KEY);renderLog();}
 };
 
-/* 匯入 CSV（相容哥哥現有格式：date,time,kh,ca,mg,no3,po4,sg,la_ml,vodka_ml,note） */
+/* 匯入 CSV（相容哥哥現有格式：date,time,kh,ca,mg,no3,po4,sg,dripMode,note） */
 document.getElementById('impBtn').onclick=()=>document.getElementById('impFile').click();
 document.getElementById('impFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
   const rd=new FileReader();
   rd.onload=()=>{
-    const lines=rd.result.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+    const lines=rd.result.replace(/^\ufeff/,'').split(/\r?\n/).filter(l=>l.trim());
     if(!lines.length){alert('檔案是空的');return;}
     const head=lines[0].split(',').map(h=>h.trim());
     const idx=k=>head.findIndex(h=>h.toLowerCase()===k);
     const ci={date:idx('date'),time:idx('time'),kh:idx('kh'),ca:idx('ca'),mg:idx('mg'),
-      no3:idx('no3'),po4:idx('po4'),sg:idx('sg'),la:idx('la_ml'),vodka:idx('vodka_ml'),note:idx('note')};
+      no3:idx('no3'),po4:idx('po4'),sg:idx('sg'),dripMode:idx('滴定模式'),note:idx('note')};
     const get=(row,k)=>ci[k]>=0?(row[ci[k]]||'').trim():'';
     const rows=lines.slice(1).map(l=>l.split(','));
     const imported=rows.map(row=>{
@@ -787,106 +267,19 @@ document.getElementById('impFile').onchange=e=>{
       if(d && t) d=d+' '+t;       // 合併 date + time
       return {d, temp:'', kh:get(row,'kh'), ca:get(row,'ca'), mg:get(row,'mg'),
         no3:get(row,'no3'), po4:get(row,'po4'), sg:get(row,'sg'),
-        la:get(row,'la'), vodka:get(row,'vodka'), note:get(row,'note'),
-        id:newId(), mtime:Date.now()};
+        dripMode:get(row,'滴定模式'), note:get(row,'note')};
     }).filter(r=>r.d||r.kh||r.ca||r.mg||r.no3||r.po4||r.sg||r.note);
     if(!imported.length){alert('沒有可匯入的資料列');return;}
     if(!confirm(`要匯入 ${imported.length} 筆紀錄嗎？\n（會加到現有列表前面，不會刪掉原有資料）`))return;
     const a=load();
-    imported.reverse().forEach(r=>a.unshift(r));   // 保持日期由新到舊
-    save(a);renderLog();maybeAutoSync();
+    imported.reverse().forEach(r=>a.unshift(r));
+    save(a);renderLog();
     alert(`✅ 匯入 ${imported.length} 筆成功！`);
   };
   rd.readAsText(f,'utf-8');
   e.target.value='';
 };
-
-/* ===== 雲端同步（私人倉庫 + PAT，存在瀏覽器 localStorage）===== */
-const SYNC_REPO='myhtu316-coder/reef-sync';
-const SYNC_FILE='reef_log.json';
-const TOKEN_KEY='reef_sync_token';
-const DEL_KEY='reef_del_v1';
-const AUTO_KEY='reef_sync_auto';
-const STATUS_KEY='reef_sync_status';
-function getToken(){return localStorage.getItem(TOKEN_KEY)||''}
-function getDeleted(){try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]}}
-function addDeleted(id){const d=getDeleted();if(!d.includes(id)){d.push(id);localStorage.setItem(DEL_KEY,JSON.stringify(d))}}
-function b64dec(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,''))))}
-function b64enc(s){return btoa(unescape(encodeURIComponent(s)))}
-function setStatus(txt,ok){const el=document.getElementById('syncStatus');if(el)el.innerHTML=txt;localStorage.setItem(STATUS_KEY,JSON.stringify({txt,ok}));}
-async function ghGet(){
-  const tok=getToken();if(!tok)throw new Error('沒有 token');
-  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});
-  if(r.status===404)return null;
-  if(!r.ok)throw new Error('讀取雲端失敗：'+r.status);
-  const j=await r.json();
-  return {sha:j.sha,data:JSON.parse(b64dec(j.content))};
-}
-async function ghPut(content,sha){
-  const tok=getToken();if(!tok)throw new Error('沒有 token');
-  const body={message:'reef sync '+new Date().toISOString(),content:b64enc(content)};
-  if(sha)body.sha=sha;
-  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{method:'PUT',headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'},body:JSON.stringify(body)});
-  if(!r.ok)throw new Error('寫入雲端失敗：'+r.status);
-  return r.json();
-}
-async function doSync(){
-  if(!getToken()){setStatus('⚠️ 先貼上 PAT 才能同步',false);return;}
-  setStatus('🔄 同步中…',null);
-  try{
-    const localLog=load();
-    const localDel=getDeleted();
-    const cloud=await ghGet();
-    const cLog=cloud?(cloud.data.log||[]):[];
-    const cDel=cloud?(cloud.data.deleted||[]):[];
-    const mergedDel=Array.from(new Set([...localDel,...cDel]));
-    const map={};
-    cLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id))map[r.id]={...r}});
-    localLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id)){const ex=map[r.id];if(!ex||(r.mtime||0)>=(ex.mtime||0))map[r.id]={...r}}});
-    const mergedLog=Object.values(map).sort((a,b)=>{
-      const da=(a.d||'').toString(),db=(b.d||'').toString();
-      if(da!==db)return da<db?1:-1;
-      return (b.mtime||0)-(a.mtime||0);
-    });
-    const payload=JSON.stringify({log:mergedLog,deleted:mergedDel});
-    await ghPut(payload,cloud?cloud.sha:undefined);
-    save(mergedLog);
-    localStorage.setItem(DEL_KEY,JSON.stringify(mergedDel));
-    renderLog();
-    setStatus('✅ 同步成功（'+mergedLog.length+' 筆 · '+new Date().toLocaleString('zh-Hant')+'）',true);
-  }catch(e){setStatus('❌ '+e.message,false);}
-}
-let _autoTimer=null;
-let _pollTimer=null;
-let _syncing=false;
-function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTimeout(_autoTimer);_autoTimer=setTimeout(doSyncSafe,1200);}
-async function doSyncSafe(){if(_syncing)return;_syncing=true;try{await doSync();}finally{_syncing=false;}}
-function startAutoSync(){if(_pollTimer)return;_pollTimer=setInterval(()=>{if(localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();},30000);}
-function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
-
-// 同步 UI 連動
-(function initSyncUI(){
-  const tokEl=document.getElementById('syncToken');
-  if(tokEl){tokEl.value=getToken();tokEl.oninput=()=>localStorage.setItem(TOKEN_KEY,tokEl.value.trim());}
-  const nowBtn=document.getElementById('syncNowBtn');if(nowBtn)nowBtn.onclick=doSync;
-  const testBtn=document.getElementById('syncTestBtn');
-  if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{await ghGet();setStatus('✅ 連線成功，倉庫可讀',true);}catch(e){setStatus('❌ '+e.message,false);}};
-  const autoBtn=document.getElementById('autoSyncBtn');
-  function refreshAuto(){if(!autoBtn)return;const on=localStorage.getItem(AUTO_KEY)==='1';autoBtn.textContent='自動同步：'+(on?'開':'關');autoBtn.classList.toggle('on',on);}
-  if(autoBtn)autoBtn.onclick=()=>{const on=localStorage.getItem(AUTO_KEY)==='1';localStorage.setItem(AUTO_KEY,on?'0':'1');refreshAuto();if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}else{stopAutoSync();}};
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();});
-  refreshAuto();
-  const last=JSON.parse(localStorage.getItem(STATUS_KEY)||'null');if(last&&last.txt)setStatus(last.txt,last.ok);
-  if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}
-})();
 renderLog();
-
-// PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
-  });
-}
 </script>
 </body>
 </html>
