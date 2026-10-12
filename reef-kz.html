@@ -448,7 +448,7 @@ function kzEdit(i) {
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
 
-function kzDeleteItem(id) {
+async function kzDeleteItem(id) {
   if (!confirm('確定刪除此筆 KZ 記錄？')) return;
   const a = kzLoad();
   const idx = a.findIndex(function(r) { return r.id === id; });
@@ -458,7 +458,7 @@ function kzDeleteItem(id) {
   }
   const r = a[idx];
   if (SYNC_URL) {
-    const ok = kzRemoveFromBackend(id);
+    const ok = await kzRemoveFromBackend(id);
     a.splice(idx, 1);
     kzSaveData(a);
     renderKzLog(a);
