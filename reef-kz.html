@@ -239,6 +239,7 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
   <div class="card">
     <h2>📜 記錄列表</h2>
     <button class="btn ghost" onclick="kzClear()">清空全部</button>
+    <button class="btn ghost" onclick="kzSync()" style="margin-left:8px;">🔄 同步</button>
     <div id="kzLog"></div>
     <div id="syncStatus" class="sync-status">⏳ 載入中...</div>
   </div>
@@ -337,6 +338,20 @@ async function kzLoadFromBackend() {
     console.error('Load from backend failed:', e);
   }
   return [];
+}
+
+// 手動同步按鈕
+async function kzSync() {
+  showSyncStatus('🔄 同步中...', '');
+  const backend = await kzLoadFromBackend();
+  const local = kzLoad();
+  const localIds = new Set(local.map(r => r.id));
+  const backendIds = new Set(backend.map(r => r.id));
+  const toAdd = backend.filter(r => !localIds.has(r.id));
+  const merged = [...local, ...toAdd];
+  kzSaveData(merged);
+  renderKzLog(merged);
+  showSyncStatus('✅ 同步完成（' + merged.length + ' 筆）', 'ok');
 }
 
 // 本地先存，然後發到後端
