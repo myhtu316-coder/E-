@@ -460,18 +460,17 @@ async function kzDeleteItem(id) {
   const a = kzLoad();
   const idx = a.findIndex(function(r) { return r.id === id; });
   if (idx === -1) {
-    // fallback: try matching by date+note since some old records may lack id
-    alert('找不到該筆記錄的 id，將使用日期比對');
+    alert('找不到該筆記錄');
     return;
   }
   const ok = await kzRemoveFromBackend(id);
-  a.splice(idx, 1);
-  kzSaveData(a);
-  renderKzLog(a);
   if (ok) {
+    a.splice(idx, 1);
+    kzSaveData(a);
+    renderKzLog(a);
     alert('已刪除（本地 + 後端）');
   } else {
-    alert('已刪除本地，後端刪除失敗');
+    alert('後端刪除失敗，本地記錄保留');
   }
 }
 
