@@ -59,15 +59,32 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
 </div>
 <script>
 const KZ_KEY = 'kz_log_v1';
-function kzLoad() { try { return JSON.parse(localStorage.getItem(KZ_KEY) || '[]'); } catch(e) { return []; } }
-function kzSaveData(a) { try { localStorage.setItem(KZ_KEY, JSON.stringify(a)); } catch(e) {} }
-function kzNewId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+function kzLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(KZ_KEY) || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function kzSaveData(a) {
+  try {
+    localStorage.setItem(KZ_KEY, JSON.stringify(a));
+  } catch(e) {}
+}
+
+function kzNewId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
 function kzSave() {
   try {
     const y = document.getElementById('kzYear') ? document.getElementById('kzYear').value : '';
     const m = document.getElementById('kzMonth') ? document.getElementById('kzMonth').value : '';
     const d = document.getElementById('kzDay') ? document.getElementById('kzDay').value : '';
     const dateVal = (y && m && d) ? (y + '-' + m + '-' + d) : new Date().toISOString().slice(0, 10);
+
     const rec = {
       d: dateVal,
       bak: document.getElementById('kzBak') ? document.getElementById('kzBak').value : '',
@@ -75,20 +92,39 @@ function kzSave() {
       s3: document.getElementById('kzS3') ? document.getElementById('kzS3').value : '',
       note: document.getElementById('kzNote') ? document.getElementById('kzNote').value : ''
     };
-    if (!rec.bak && !rec.sp && !rec.s3) { alert('至少選一項滴定數值'); return; }
+
+    if (!rec.bak && !rec.sp && !rec.s3) {
+      alert('至少選一項滴定數值');
+      return;
+    }
+
     const a = kzLoad();
     rec.id = kzNewId();
     rec.t = Date.now();
     a.unshift(rec);
     kzSaveData(a);
     renderKzLog();
+
     document.getElementById('kzBak').value = '';
     document.getElementById('kzSp').value = '';
     document.getElementById('kzS3').value = '';
     document.getElementById('kzNote').value = '';
     alert('已儲存 KZ 記錄（共 ' + a.length + ' 筆，獨立於主網頁）');
-  } catch (e) { console.error('kzSave error:', e); alert('儲存失敗：' + e.message); }
+  } catch (e) {
+    console.error('kzSave error:', e);
+    alert('儲存失敗：' + e.message);
+  }
+}
 
+function kzRender() {
+  try {
+    const a = kzLoad();
+    const box = document.getElementById('kzLog');
+    if (!box) return;
+    if (!a.length) {
+      box.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>';
+      return;
+    }
     box.innerHTML = a.map(function(r, i) {
       const parts = [];
       if (r.bak) parts.push('Bak:' + r.bak + '滴');
@@ -96,8 +132,12 @@ function kzSave() {
       if (r.s3) parts.push('S3:' + r.s3 + 'ml');
       return '<div class="logitem"><b>' + r.d + '</b> ' + (r.note ? ' · ' + r.note : '') + '<br><span style="color:var(--cyan);font-weight:600;">' + parts.join(' / ') + '</span><br><span style="float:right;margin-top:4px;"><button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button><button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button></span></div>';
     }).join('');
-  } catch (e) { console.error('renderKzLog error:', e); if (document.getElementById('kzLog')) document.getElementById('kzLog').innerHTML = '<div style="color:var(--pink);">顯示錯誤</div>'; }
+  } catch (e) {
+    console.error('renderKzLog error:', e);
+    if (document.getElementById('kzLog')) document.getElementById('kzLog').innerHTML = '<div style="color:var(--pink);">顯示錯誤</div>';
+  }
 }
+
 function kzEdit(i) {
   const a = kzLoad();
   if (i < 0 || i >= a.length) return;
@@ -112,51 +152,96 @@ function kzEdit(i) {
   a.splice(i, 1);
   kzSaveData(a);
   renderKzLog();
-  kzRender();
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
+
 function kzDelete(i) {
   if (confirm('確定刪除此筆 KZ 記錄？')) {
     const a = kzLoad();
-    if (i >= 0 && i < a.length) { a.splice(i, 1); kzSaveData(a);
-  renderKzLog(); kzRender(); alert('已刪除'); }
+    if (i >= 0 && i < a.length) {
+      a.splice(i, 1);
+      kzSaveData(a);
+      renderKzLog();
+      alert('已刪除');
+    }
   }
 }
+
 function kzClear() {
-  if (confirm('確定清空全部 KZ 記錄？')) { kzSaveData([]); kzRender(); alert('已清空'); }
+  if (confirm('確定清空全部 KZ 記錄？')) {
+    kzSaveData([]);
+    renderKzLog();
+    alert('已清空');
+  }
 }
+
 (function initKzOpts() {
   const bak = document.getElementById('kzBak');
-  if (bak) { bak.innerHTML = '<option value="">-- 選擇 --</option>'; for (var v = 1; v <= 10; v++) { var o = document.createElement('option'); o.value = v; o.textContent = v + ' 滴'; bak.appendChild(o); } }
+  if (bak) {
+    bak.innerHTML = '<option value="">-- 選擇 --</option>';
+    for (var v = 1; v <= 10; v++) {
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + ' 滴';
+      bak.appendChild(o);
+    }
+  }
   const sp = document.getElementById('kzSp');
-  if (sp) { sp.innerHTML = '<option value="">-- 選擇 --</option>'; for (var v = 1; v <= 10; v++) { var o = document.createElement('option'); o.value = v; o.textContent = v + ' 滴'; sp.appendChild(o); } }
+  if (sp) {
+    sp.innerHTML = '<option value="">-- 選擇 --</option>';
+    for (var v = 1; v <= 10; v++) {
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + ' 滴';
+      sp.appendChild(o);
+    }
+  }
   const s3 = document.getElementById('kzS3');
-  if (s3) { s3.innerHTML = '<option value="">-- 選擇 --</option>'; for (var v = 1; v <= 90; v++) { var val = (v / 100).toFixed(2); var o = document.createElement('option'); o.value = val; o.textContent = val + ' ml'; s3.appendChild(o); } }
+  if (s3) {
+    s3.innerHTML = '<option value="">-- 選擇 --</option>';
+    for (var v = 1; v <= 90; v++) {
+      var val = (v / 100).toFixed(2);
+      var o = document.createElement('option');
+      o.value = val;
+      o.textContent = val + ' ml';
+      s3.appendChild(o);
+    }
+  }
 })();
+
 (function initKzDate() {
   const y = document.getElementById('kzYear'), m = document.getElementById('kzMonth'), d = document.getElementById('kzDay');
   const today = new Date(), yr = today.getFullYear(), mo = today.getMonth() + 1, da = today.getDate();
-  if (y) { for (var yr = 2020; yr <= 2035; yr++) { var o = document.createElement('option'); o.value = yr; o.textContent = yr + '年'; y.appendChild(o); } y.value = yr.toString(); }
-  if (m) { for (var mo = 1; mo <= 12; mo++) { var o = document.createElement('option'); o.value = mo < 10 ? '0' + mo : mo; o.textContent = mo + '月'; m.appendChild(o); } m.value = (today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : (today.getMonth() + 1).toString()); }
-  if (d) { for (var da = 1; da <= 31; da++) { var o = document.createElement('option'); o.value = da < 10 ? '0' + da : da; o.textContent = da + '日'; d.appendChild(o); } d.value = (today.getDate() < 10 ? '0' + today.getDate() : today.getDate().toString()); }
+  if (y) {
+    for (var yr = 2020; yr <= 2035; yr++) {
+      var o = document.createElement('option');
+      o.value = yr;
+      o.textContent = yr + '年';
+      y.appendChild(o);
+    }
+    y.value = yr.toString();
+  }
+  if (m) {
+    for (var mo = 1; mo <= 12; mo++) {
+      var o = document.createElement('option');
+      o.value = mo < 10 ? '0' + mo : mo;
+      o.textContent = mo + '月';
+      m.appendChild(o);
+    }
+    m.value = (today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : (today.getMonth() + 1).toString());
+  }
+  if (d) {
+    for (var da = 1; da <= 31; da++) {
+      var o = document.createElement('option');
+      o.value = da < 10 ? '0' + da : da;
+      o.textContent = da + '日';
+      d.appendChild(o);
+    }
+    d.value = (today.getDate() < 10 ? '0' + today.getDate() : today.getDate().toString());
+  }
 })();
-if (typeof renderKzLog === 'function') renderKzLog();
 
-function renderKzLog(){
-  try{
-    const a = JSON.parse(localStorage.getItem('kz_log_v1') || '[]');
-    const box = document.getElementById('kzLog');
-    if(!box) return;
-    if(!a.length){box.innerHTML='<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>'; return;}
-    box.innerHTML = a.map(function(r, i){
-      var parts = [];
-      if(r.bak) parts.push('Bak:' + r.bak + '滴');
-      if(r.sp) parts.push('Sp:' + r.sp + '滴');
-      if(r.s3) parts.push('S3:' + r.s3 + 'ml');
-      return '<div class="logitem"><b>' + r.d + '</b> ' + (r.note ? '· ' + r.note : '') + '<br><span style="color:var(--cyan);font-weight:600;">' + parts.join(' / ') + '</span><br><span style="float:right;margin-top:4px;"><button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button><button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button></span></div>';
-    }).join('');
-  }catch(e){console.error('renderKzLog error:', e); if(document.getElementById('kzLog')) document.getElementById('kzLog').innerHTML = '<div style="color:var(--pink);">顯示錯誤</div>'}
-}
+if (typeof renderKzLog === 'function') renderKzLog();
 </script>
 </body>
 </html>
