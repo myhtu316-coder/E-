@@ -589,7 +589,6 @@ function kzClear() {
     const backendItems = await kzLoadFromBackend();
     if (backendItems.length > 0) {
       const localItems = kzLoad();
-      // 合併：後端資料優先，本地缺少的補上
       const localIds = new Set(localItems.map(r => r.id));
       const newItems = backendItems.filter(r => !localIds.has(r.id));
       const merged = [...localItems, ...newItems];
@@ -603,6 +602,23 @@ function kzClear() {
       showSyncStatus('⚪ 不安全模式: 尚未設定後端，僅存本機', '');
     } else {
       showSyncStatus('🔄 後端已設定，記錄將同步至後端', 'ok');
+      // 每 10 秒自動從後端同步一次
+      setInterval(async () => {
+        try {
+          const backend = await kzLoadFromBackend();
+          const local = kzLoad();
+          const localIds = new Set(local.map(r => r.id));
+          const backendIds = new Set(backend.map(r => r.id));
+          // 合併：本地有但後端沒有 → 補進後端；後端有但本地沒有 → 補進本地
+          const toAdd = backend.filter(r => !localIds.has(r.id));
+          const toRemove = local.filter(r => !backendIds.has(r.id));
+          const merged = [...local, ...toAdd];
+          kzSaveData(merged);
+          renderKzLog(merged);
+        } catch(e) {
+          console.error('Auto sync failed:', e);
+        }
+      }, 10000);
     }
   } catch (e) {
     showSyncStatus('❌ 初始化失敗', 'err');
