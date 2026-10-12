@@ -380,7 +380,7 @@ function renderKzLog(items) {
       + (createdAt ? '<br><span style="font-size:11px;color:var(--dim);margin-top:4px;">' + escapeHtml(createdAt) + '</span>' : '')
       + '<br><span style="float:right;margin-top:4px;">'
       + '<button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button>'
-      + '<button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button>'
+      + '<button onclick="kzDeleteItem(' + JSON.stringify(r.id) + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button>'
       + '</span>'
       + '</div>';
   }).join('');
