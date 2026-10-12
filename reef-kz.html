@@ -448,19 +448,30 @@ function kzEdit(i) {
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
 
-function kzDelete(i) {
+function kzDeleteItem(id) {
   if (!confirm('確定刪除此筆 KZ 記錄？')) return;
   const a = kzLoad();
-  if (i < 0 || i >= a.length) return;
-  const r = a[i];
-  const ok = kzRemoveFromBackend(r.id);
-  a.splice(i, 1);
-  kzSaveData(a);
-  renderKzLog(a);
-  if (ok) {
-    alert('已刪除本地記錄，已同步後端');
+  const idx = a.findIndex(function(r) { return r.id === id; });
+  if (idx === -1) {
+    alert('找不到這筆記錄');
+    return;
+  }
+  const r = a[idx];
+  if (SYNC_URL) {
+    const ok = kzRemoveFromBackend(id);
+    a.splice(idx, 1);
+    kzSaveData(a);
+    renderKzLog(a);
+    if (ok) {
+      alert('已刪除本地記錄，已同步後端');
+    } else {
+      alert('已刪除本地記錄，但後端刪除失敗');
+    }
   } else {
-    alert('已刪除本地記錄，但後端刪除失敗');
+    a.splice(idx, 1);
+    kzSaveData(a);
+    renderKzLog(a);
+    alert('已刪除本地記錄（未設定後端）');
   }
 }
 
