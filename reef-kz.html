@@ -210,16 +210,22 @@ function kzClear() {
 })();
 
 (function initKzDate() {
-  const y = document.getElementById('kzYear'), m = document.getElementById('kzMonth'), d = document.getElementById('kzDay');
-  const today = new Date(), yr = today.getFullYear(), mo = today.getMonth() + 1, da = today.getDate();
+  const y = document.getElementById('kzYear');
+  const m = document.getElementById('kzMonth');
+  const d = document.getElementById('kzDay');
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const day = today.getDate();
+
   if (y) {
-    for (var yr = 2020; yr <= 2035; yr++) {
+    for (var v = 2020; v <= 2035; v++) {
       var o = document.createElement('option');
-      o.value = yr;
-      o.textContent = yr + '年';
+      o.value = v;
+      o.textContent = v + ' 年';
       y.appendChild(o);
     }
-    y.value = yr.toString();
+    y.value = year.toString();
   }
   if (m) {
     for (var mo = 1; mo <= 12; mo++) {
@@ -228,7 +234,7 @@ function kzClear() {
       o.textContent = mo + '月';
       m.appendChild(o);
     }
-    m.value = (today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : (today.getMonth() + 1).toString());
+    m.value = (month < 10 ? '0' + month : month.toString());
   }
   if (d) {
     for (var da = 1; da <= 31; da++) {
@@ -237,7 +243,7 @@ function kzClear() {
       o.textContent = da + '日';
       d.appendChild(o);
     }
-    d.value = (today.getDate() < 10 ? '0' + today.getDate() : today.getDate().toString());
+    d.value = (day < 10 ? '0' + day : day.toString());
   }
 })();
 
