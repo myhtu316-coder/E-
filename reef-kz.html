@@ -81,13 +81,13 @@ function kzSave() {
     rec.t = Date.now();
     a.unshift(rec);
     kzSaveData(a);
-  renderKzLog();
-    kzRender();
+    renderKzLog();
     document.getElementById('kzBak').value = '';
     document.getElementById('kzSp').value = '';
     document.getElementById('kzS3').value = '';
     document.getElementById('kzNote').value = '';
     alert('已儲存 KZ 記錄（共 ' + a.length + ' 筆，獨立於主網頁）');
+  } catch (e) { console.error('kzSave error:', e); alert('儲存失敗：' + e.message); }
   } catch (e) { console.error('kzSave error:', e); alert('儲存失敗：' + e.message); }
 }
 function kzRender() {
