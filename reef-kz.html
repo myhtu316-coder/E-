@@ -324,6 +324,21 @@ async function deleteJSON(url) {
   }
 }
 
+// 從後端讀取資料
+async function kzLoadFromBackend() {
+  if (!SYNC_URL) return [];
+  try {
+    const res = await fetch(SYNC_URL, { method: 'GET' });
+    const data = await res.json();
+    if (res.ok && data && data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+  } catch(e) {
+    console.error('Load from backend failed:', e);
+  }
+  return [];
+}
+
 // 本地先存，然後發到後端
 async function kzSaveToBackend(rec) {
   if (!SYNC_URL) return true;
@@ -568,10 +583,22 @@ function kzClear() {
   }
 })();
 
-(function initApp() {
+(async function initApp() {
   try {
-    const items = kzLoad();
-    renderKzLog(items);
+    // 先從後端載入資料，合併到本地
+    const backendItems = await kzLoadFromBackend();
+    if (backendItems.length > 0) {
+      const localItems = kzLoad();
+      // 合併：後端資料優先，本地缺少的補上
+      const localIds = new Set(localItems.map(r => r.id));
+      const newItems = backendItems.filter(r => !localIds.has(r.id));
+      const merged = [...localItems, ...newItems];
+      kzSaveData(merged);
+      renderKzLog(merged);
+    } else {
+      const items = kzLoad();
+      renderKzLog(items);
+    }
     if (!SYNC_URL) {
       showSyncStatus('⚪ 不安全模式: 尚未設定後端，僅存本機', '');
     } else {
