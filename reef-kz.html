@@ -328,6 +328,7 @@ async function deleteJSON(url) {
 async function kzSaveToBackend(rec) {
   if (!SYNC_URL) return true;
   const payload = {
+    id: rec.id,
     d: rec.d || new Date().toISOString().slice(0, 10),
     bak: rec.bak || null,
     sp: rec.sp || null,
