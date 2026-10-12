@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#050b14">
 <title>KZ 滴定機記錄 | 海水小幫手</title>
 <style>
-:root{--bg:#04121f;--panel:#0a1e33;--line:#1a3a5c;--cyan:#00f3ff;--green:#00ff9d;--pink:#ff4d6d;--txt:#e0f0ff;--dim:#7a9ab8;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;min-height:100vh;}
+:root{--bg:#050b14;--panel:#0c1626;--line:#1b2c44;--cyan:#00f3ff;--txt:#dbe9ff;--dim:#7e93b3;--pink:#ff5fa2;--green:#3dffb0;}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#0a1a2e,var(--bg));color:var(--txt);font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}
+.wrap{max-width:720px;margin:0 auto;padding:14px 14px 90px;}
 header{text-align:center;padding:18px 0 10px;}
 header h1{margin:0;font-size:24px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 0 14px var(--cyan),0 0 28px rgba(0,243,255,.5);}
 header p{margin:6px 0 0;color:var(--dim);font-size:12px;}
@@ -17,39 +18,230 @@ label{display:block;font-size:12px;color:var(--dim);margin:12px 0 5px;font-weigh
 input,select{width:100%;padding:12px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:#08111f;color:var(--txt);outline:none;}
 input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,243,255,.18);}
 .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:900;color:#04121f;cursor:pointer;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 18px rgba(0,243,255,.45);}
-.btn:active{transform:scale(.97);}
-.logitem{background:#08111f;border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;font-size:13px;line-height:1.6;}
-.sync-status{margin-top:10px;font-size:12px;padding:8px;border-radius:8px;text-align:center;}
-.sync-status.ok{background:rgba(0,255,157,.15);color:var(--green);}
-.sync-status.err{background:rgba(255,77,109,.15);color:var(--pink);}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim);box-shadow:none;}
+.hint{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.6;}
+.logitem{padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:13px;background:#08111f;}
+.logitem .del{float:right;color:var(--pink);font-size:12px;cursor:pointer;font-weight:700;margin-left:8px;}
+.logitem .edit{float:right;color:var(--cyan);font-size:12px;cursor:pointer;font-weight:700;margin-right:8px;}
+.sync-status{font-size:11px;color:var(--dim);margin-top:6px;text-align:center;}
+.sync-status.ok{color:var(--green);}
+.sync-status.err{color:var(--pink);}
 </style>
 </head>
 <body>
-<header>
-<h1>💧 KZ 滴定機記錄</h1>
-<p>獨立頁面 · 完整記錄功能 · 支援手機/平板自動同步（後端轉發）</p>
-</header>
-<div class="card">
-<h2>📋 新增記錄</h2>
-<label>日期</label>
-<select id="kzYear"></select>
-<select id="kzMonth"></select>
-<select id="kzDay"></select>
-<label>KZ Bak 滴速</label>
-<select id="kzBak"><option value="">-- 選擇 --</option><option value="1">1 滴</option><option value="2">2 滴</option><option value="3">3 滴</option><option value="4">4 滴</option><option value="5">5 滴</option><option value="6">6 滴</option><option value="7">7 滴</option><option value="8">8 滴</option><option value="9">9 滴</option><option value="10">10 滴</option></select>
-<label>Kz Sp 滴速</label>
-<select id="kzSp"><option value="">-- 選擇 --</option><option value="1">1 滴</option><option value="2">2 滴</option><option value="3">3 滴</option><option value="4">4 滴</option><option value="5">5 滴</option><option value="6">6 滴</option><option value="7">7 滴</option><option value="8">8 滴</option><option value="9">9 滴</option><option value="10">10 滴</option></select>
-<label>Kz S3 劑量</label>
-<select id="kzS3"><option value="">-- 選擇 --</option><option value="0.01">0.01 ml</option><option value="0.02">0.02 ml</option><option value="0.03">0.03 ml</option><option value="0.04">0.04 ml</option><option value="0.05">0.05 ml</option><option value="0.06">0.06 ml</option><option value="0.07">0.07 ml</option><option value="0.08">0.08 ml</option><option value="0.09">0.09 ml</option><option value="0.10">0.10 ml</option><option value="0.11">0.11 ml</option><option value="0.12">0.12 ml</option><option value="0.13">0.13 ml</option><option value="0.14">0.14 ml</option><option value="0.15">0.15 ml</option><option value="0.16">0.16 ml</option><option value="0.17">0.17 ml</option><option value="0.18">0.18 ml</option><option value="0.19">0.19 ml</option><option value="0.20">0.20 ml</option><option value="0.21">0.21 ml</option><option value="0.22">0.22 ml</option><option value="0.23">0.23 ml</option><option value="0.24">0.24 ml</option><option value="0.25">0.25 ml</option><option value="0.26">0.26 ml</option><option value="0.27">0.27 ml</option><option value="0.28">0.28 ml</option><option value="0.29">0.29 ml</option><option value="0.30">0.30 ml</option><option value="0.31">0.31 ml</option><option value="0.32">0.32 ml</option><option value="0.33">0.33 ml</option><option value="0.34">0.34 ml</option><option value="0.35">0.35 ml</option><option value="0.36">0.36 ml</option><option value="0.37">0.37 ml</option><option value="0.38">0.38 ml</option><option value="0.39">0.39 ml</option><option value="0.40">0.40 ml</option><option value="0.41">0.41 ml</option><option value="0.42">0.42 ml</option><option value="0.43">0.43 ml</option><option value="0.44">0.44 ml</option><option value="0.45">0.45 ml</option><option value="0.46">0.46 ml</option><option value="0.47">0.47 ml</option><option value="0.48">0.48 ml</option><option value="0.49">0.49 ml</option><option value="0.50">0.50 ml</option><option value="0.51">0.51 ml</option><option value="0.52">0.52 ml</option><option value="0.53">0.53 ml</option><option value="0.54">0.54 ml</option><option value="0.55">0.55 ml</option><option value="0.56">0.56 ml</option><option value="0.57">0.57 ml</option><option value="0.58">0.58 ml</option><option value="0.59">0.59 ml</option><option value="0.60">0.60 ml</option><option value="0.61">0.61 ml</option><option value="0.62">0.62 ml</option><option value="0.63">0.63 ml</option><option value="0.64">0.64 ml</option><option value="0.65">0.65 ml</option><option value="0.66">0.66 ml</option><option value="0.67">0.67 ml</option><option value="0.68">0.68 ml</option><option value="0.69">0.69 ml</option><option value="0.70">0.70 ml</option><option value="0.71">0.71 ml</option><option value="0.72">0.72 ml</option><option value="0.73">0.73 ml</option><option value="0.74">0.74 ml</option><option value="0.75">0.75 ml</option><option value="0.76">0.76 ml</option><option value="0.77">0.77 ml</option><option value="0.78">0.78 ml</option><option value="0.79">0.79 ml</option><option value="0.80">0.80 ml</option><option value="0.81">0.81 ml</option><option value="0.82">0.82 ml</option><option value="0.83">0.83 ml</option><option value="0.84">0.84 ml</option><option value="0.85">0.85 ml</option><option value="0.86">0.86 ml</option><option value="0.87">0.87 ml</option><option value="0.88">0.88 ml</option><option value="0.89">0.89 ml</option><option value="0.90">0.90 ml</option></select>
-<label>備註</label>
-<input id="kzNote" placeholder="例如 換水前測量 / 調整滴速">
-<button class="btn" onclick="kzSave()">存一筆 KZ 記錄</button>
-</div>
-<div class="card">
-<h2>📦 記錄列表</h2>
-<button class="btn" style="background:linear-gradient(90deg,var(--pink),var(--cyan));margin-top:0;" onclick="kzClear()">清空全部</button>
-<div id="kzLog" style="margin-top:12px;"></div>
-<div id="syncStatus" class="sync-status">⏳ 載入中...</div>
+<div class="wrap">
+  <header>
+    <h1>💧 KZ 滴定機記錄</h1>
+    <p>獨立頁面 · 完整記錄功能 · 支援手機/平板自動同步（後端轉發）</p>
+  </header>
+  <div class="card">
+    <h2>📋 新增記錄</h2>
+    <label>日期</label>
+    <div class="row" style="gap:6px">
+      <select id="kzYear">
+        <option value="">-- 選擇 --</option>
+        <option value="2020">2020 年</option>
+        <option value="2021">2021 年</option>
+        <option value="2022">2022 年</option>
+        <option value="2023">2023 年</option>
+        <option value="2024">2024 年</option>
+        <option value="2025">2025 年</option>
+        <option value="2026" selected>2026 年</option>
+        <option value="2027">2027 年</option>
+        <option value="2028">2028 年</option>
+        <option value="2029">2029 年</option>
+        <option value="2030">2030 年</option>
+        <option value="2031">2031 年</option>
+        <option value="2032">2032 年</option>
+        <option value="2033">2033 年</option>
+        <option value="2034">2034 年</option>
+        <option value="2035">2035 年</option>
+      </select>
+      <select id="kzMonth">
+        <option value="">-- 選擇 --</option>
+        <option value="01">1 月</option>
+        <option value="02">2 月</option>
+        <option value="03">3 月</option>
+        <option value="04">4 月</option>
+        <option value="05">5 月</option>
+        <option value="06">6 月</option>
+        <option value="07">7 月</option>
+        <option value="08">8 月</option>
+        <option value="09">9 月</option>
+        <option value="10" selected>10 月</option>
+        <option value="11">11 月</option>
+        <option value="12">12 月</option>
+      </select>
+      <select id="kzDay">
+        <option value="">-- 選擇 --</option>
+        <option value="01">1 日</option>
+        <option value="02">2 日</option>
+        <option value="03">3 日</option>
+        <option value="04">4 日</option>
+        <option value="05">5 日</option>
+        <option value="06">6 日</option>
+        <option value="07">7 日</option>
+        <option value="08">8 日</option>
+        <option value="09">9 日</option>
+        <option value="10">10 日</option>
+        <option value="11" selected>11 日</option>
+        <option value="12">12 日</option>
+        <option value="13">13 日</option>
+        <option value="14">14 日</option>
+        <option value="15">15 日</option>
+        <option value="16">16 日</option>
+        <option value="17">17 日</option>
+        <option value="18">18 日</option>
+        <option value="19">19 日</option>
+        <option value="20">20 日</option>
+        <option value="21">21 日</option>
+        <option value="22">22 日</option>
+        <option value="23">23 日</option>
+        <option value="24">24 日</option>
+        <option value="25">25 日</option>
+        <option value="26">26 日</option>
+        <option value="27">27 日</option>
+        <option value="28">28 日</option>
+        <option value="29">29 日</option>
+        <option value="30">30 日</option>
+        <option value="31">31 日</option>
+      </select>
+    </div>
+    <label>KZ Bak 滴速</label>
+    <select id="kzBak">
+      <option value="">-- 選擇 --</option>
+      <option value="1">1 滴</option>
+      <option value="2">2 滴</option>
+      <option value="3">3 滴</option>
+      <option value="4">4 滴</option>
+      <option value="5">5 滴</option>
+      <option value="6">6 滴</option>
+      <option value="7">7 滴</option>
+      <option value="8">8 滴</option>
+      <option value="9">9 滴</option>
+      <option value="10">10 滴</option>
+      <option value="">-- 選擇 --</option>
+    </select>
+    <label>Kz Sp 滴速</label>
+    <select id="kzSp">
+      <option value="">-- 選擇 --</option>
+      <option value="1">1 滴</option>
+      <option value="2">2 滴</option>
+      <option value="3">3 滴</option>
+      <option value="4">4 滴</option>
+      <option value="5">5 滴</option>
+      <option value="6">6 滴</option>
+      <option value="7">7 滴</option>
+      <option value="8">8 滴</option>
+      <option value="9">9 滴</option>
+      <option value="10">10 滴</option>
+      <option value="">-- 選擇 --</option>
+    </select>
+    <label>Kz S3 劑量</label>
+    <select id="kzS3">
+      <option value="">-- 選擇 --</option>
+      <option value="0.01">0.01 ml</option>
+      <option value="0.02">0.02 ml</option>
+      <option value="0.03">0.03 ml</option>
+      <option value="0.04">0.04 ml</option>
+      <option value="0.05">0.05 ml</option>
+      <option value="0.06">0.06 ml</option>
+      <option value="0.07">0.07 ml</option>
+      <option value="0.08">0.08 ml</option>
+      <option value="0.09">0.09 ml</option>
+      <option value="0.10">0.10 ml</option>
+      <option value="0.11">0.11 ml</option>
+      <option value="0.12">0.12 ml</option>
+      <option value="0.13">0.13 ml</option>
+      <option value="0.14">0.14 ml</option>
+      <option value="0.15">0.15 ml</option>
+      <option value="0.16">0.16 ml</option>
+      <option value="0.17">0.17 ml</option>
+      <option value="0.18">0.18 ml</option>
+      <option value="0.19">0.19 ml</option>
+      <option value="0.20">0.20 ml</option>
+      <option value="0.21">0.21 ml</option>
+      <option value="0.22">0.22 ml</option>
+      <option value="0.23">0.23 ml</option>
+      <option value="0.24">0.24 ml</option>
+      <option value="0.25">0.25 ml</option>
+      <option value="0.26">0.26 ml</option>
+      <option value="0.27">0.27 ml</option>
+      <option value="0.28">0.28 ml</option>
+      <option value="0.29">0.29 ml</option>
+      <option value="0.30">0.30 ml</option>
+      <option value="0.31">0.31 ml</option>
+      <option value="0.32">0.32 ml</option>
+      <option value="0.33">0.33 ml</option>
+      <option value="0.34">0.34 ml</option>
+      <option value="0.35">0.35 ml</option>
+      <option value="0.36">0.36 ml</option>
+      <option value="0.37">0.37 ml</option>
+      <option value="0.38">0.38 ml</option>
+      <option value="0.39">0.39 ml</option>
+      <option value="0.40">0.40 ml</option>
+      <option value="0.41">0.41 ml</option>
+      <option value="0.42">0.42 ml</option>
+      <option value="0.43">0.43 ml</option>
+      <option value="0.44">0.44 ml</option>
+      <option value="0.45">0.45 ml</option>
+      <option value="0.46">0.46 ml</option>
+      <option value="0.47">0.47 ml</option>
+      <option value="0.48">0.48 ml</option>
+      <option value="0.49">0.49 ml</option>
+      <option value="0.50">0.50 ml</option>
+      <option value="0.51">0.51 ml</option>
+      <option value="0.52">0.52 ml</option>
+      <option value="0.53">0.53 ml</option>
+      <option value="0.54">0.54 ml</option>
+      <option value="0.55">0.55 ml</option>
+      <option value="0.56">0.56 ml</option>
+      <option value="0.57">0.57 ml</option>
+      <option value="0.58">0.58 ml</option>
+      <option value="0.59">0.59 ml</option>
+      <option value="0.60">0.60 ml</option>
+      <option value="0.61">0.61 ml</option>
+      <option value="0.62">0.62 ml</option>
+      <option value="0.63">0.63 ml</option>
+      <option value="0.64">0.64 ml</option>
+      <option value="0.65">0.65 ml</option>
+      <option value="0.66">0.66 ml</option>
+      <option value="0.67">0.67 ml</option>
+      <option value="0.68">0.68 ml</option>
+      <option value="0.69">0.69 ml</option>
+      <option value="0.70">0.70 ml</option>
+      <option value="0.71">0.71 ml</option>
+      <option value="0.72">0.72 ml</option>
+      <option value="0.73">0.73 ml</option>
+      <option value="0.74">0.74 ml</option>
+      <option value="0.75">0.75 ml</option>
+      <option value="0.76">0.76 ml</option>
+      <option value="0.77">0.77 ml</option>
+      <option value="0.78">0.78 ml</option>
+      <option value="0.79">0.79 ml</option>
+      <option value="0.80">0.80 ml</option>
+      <option value="0.81">0.81 ml</option>
+      <option value="0.82">0.82 ml</option>
+      <option value="0.83">0.83 ml</option>
+      <option value="0.84">0.84 ml</option>
+      <option value="0.85">0.85 ml</option>
+      <option value="0.86">0.86 ml</option>
+      <option value="0.87">0.87 ml</option>
+      <option value="0.88">0.88 ml</option>
+      <option value="0.89">0.89 ml</option>
+      <option value="0.90">0.90 ml</option>
+      <option value="">-- 選擇 --</option>
+    </select>
+    <label>備註</label>
+    <input id="kzNote" type="text" placeholder="例如 換水前測量 / 調整滴速">
+    <button class="btn" onclick="kzSave()">存一筆 KZ 記錄</button>
+  </div>
+  <div class="card">
+    <h2>📜 記錄列表</h2>
+    <button class="btn ghost" onclick="kzClear()">清空全部</button>
+    <div id="kzLog"></div>
+    <div id="syncStatus" class="sync-status">⏳ 載入中...</div>
+  </div>
 </div>
 <script>
 const SYNC_URL = 'https://kz-sync-api.vercel.app/api/kz-sync';
@@ -63,25 +255,39 @@ function showSyncStatus(msg, type) {
 }
 
 function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function kzLoad() {
   try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch(e) { return []; }
+    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
 }
 
-function kzSaveData(arr) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(arr));
+function kzSaveData(a) {
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(a));
+  } catch (e) {}
 }
 
 function kzNewId() {
-  return Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
+}
+
+function alert(msg) {
+  if (typeof window !== 'undefined' && window.alert) {
+    window.alert(msg);
+  }
+}
+
+function confirm(msg) {
+  if (typeof window !== 'undefined' && window.confirm) {
+    return window.confirm(msg);
+  }
+  return true;
 }
 
 async function postJSON(url, payload) {
@@ -93,7 +299,7 @@ async function postJSON(url, payload) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, { ...opts, signal: controller.signal });
+    const res = await fetch(url, opts);
     const data = await res.json();
     return { ok: res.ok, status: res.status, data };
   } catch (e) {
@@ -103,6 +309,22 @@ async function postJSON(url, payload) {
   }
 }
 
+async function deleteJSON(url) {
+  if (!SYNC_URL) return true;
+  try {
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    return res.ok;
+  } catch (e) {
+    console.error('Delete request failed:', e);
+    return false;
+  }
+}
+
+// 本地先存，然後發到後端
 async function kzSaveToBackend(rec) {
   if (!SYNC_URL) return true;
   const payload = {
@@ -121,25 +343,21 @@ async function kzSaveToBackend(rec) {
   return false;
 }
 
+// 刪除本地 + 請後端刪
 async function kzRemoveFromBackend(id) {
   if (!SYNC_URL) return true;
   if (!id) return true;
-  try {
-    const res = await fetch(SYNC_URL + '/' + encodeURIComponent(id), {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await res.json();
-    if (res.ok && data && data.success) {
-      showSyncStatus('✅ 已從後端刪除: ' + id, 'ok');
-      return true;
-    }
-    showSyncStatus('❌ 已刪本地，但後端刪除失敗', 'err');
-    return false;
-  } catch(e) {
-    showSyncStatus('❌ 後端刪除網路錯誤', 'err');
-    return false;
+  const res = await fetch(SYNC_URL + '/' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  const data = await res.json();
+  if (res.ok && data && data.success) {
+    showSyncStatus('✅ 已從後端刪除: ' + id, 'ok');
+    return true;
   }
+  showSyncStatus('❌ 已刪本地，但後端刪除失敗', 'err');
+  return false;
 }
 
 function renderKzLog(items) {
@@ -212,17 +430,21 @@ async function kzSave() {
   }
 }
 
+
 function kzEdit(i) {
   const a = kzLoad();
   if (i < 0 || i >= a.length) return;
   const r = a[i];
   document.getElementById('kzYear').value = r.d ? r.d.split('-')[0] : '';
   document.getElementById('kzMonth').value = r.d ? r.d.split('-')[1] : '';
-  document.getElementById('kzDay').value = r.d ? r.d.split('-')[2] : '';
+  document.getElementById('kzDay').value = r.d ? r.d.split('-')[2] || '' : '';
   document.getElementById('kzBak').value = r.bak || '';
   document.getElementById('kzSp').value = r.sp || '';
   document.getElementById('kzS3').value = r.s3 || '';
   document.getElementById('kzNote').value = r.note || '';
+  a.splice(i, 1);
+  kzSaveData(a);
+  renderKzLog(a);
   alert('已載入編輯，修改後按「存一筆」即可更新');
 }
 
@@ -230,7 +452,8 @@ async function kzDeleteItem(id) {
   const a = kzLoad();
   const idx = a.findIndex(function(r) { return r.id === id; });
   if (idx === -1) {
-    alert('找不到該筆記錄');
+    // fallback: try matching by date+note since some old records may lack id
+    alert('找不到該筆記錄的 id，將使用日期比對');
     return;
   }
   const ok = await kzRemoveFromBackend(id);
@@ -246,46 +469,109 @@ async function kzDeleteItem(id) {
 
 function kzClear() {
   if (!confirm('確定清空全部 KZ 記錄？')) return;
-  kzSaveData([]);
-  renderKzLog([]);
-  showSyncStatus('已清空本地記錄', '');
+  const a = kzLoad();
+  kzSaveData(a);
+  renderKzLog(a);
+  if (!SYNC_URL) {
+    showSyncStatus('⚪ 未設定後端: 請在 SYNC_URL 填入後端網址', '');
+    alert('已清空本地記錄，但沒有後端，同步不會運作。');
+    return;
+  }
+  const ids = a.map(function(r) { return r.id; });
+  Promise.all(ids.map(function(id) {
+    return deleteJSON(SYNC_URL + '/' + encodeURIComponent(id));
+  })).then(function(results) {
+    const failed = results.filter(function(x) { return !x; });
+    if (failed.length === 0) {
+      showSyncStatus('✅ 已清空後端', 'ok');
+    } else {
+      showSyncStatus('⚠️ 本地清空完成，後端清空部分失敗', 'err');
+    }
+  }).catch(function(e) {
+    showSyncStatus('❌ 清空過程中發生錯誤', 'err');
+  });
 }
 
-// 初始化日期下拉
-(function() {
+(function initKzOpts() {
+  const bak = document.getElementById('kzBak');
+  if (bak) {
+    for (var v = 1; v <= 10; v++) {
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + ' 滴';
+      bak.appendChild(o);
+    }
+  }
+  const sp = document.getElementById('kzSp');
+  if (sp) {
+    for (var v = 1; v <= 10; v++) {
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + ' 滴';
+      sp.appendChild(o);
+    }
+  }
+  const s3 = document.getElementById('kzS3');
+  if (s3) {
+    for (var v = 1; v <= 90; v++) {
+      var val = (v / 100).toFixed(2);
+      var o = document.createElement('option');
+      o.value = val;
+      o.textContent = val + ' ml';
+      s3.appendChild(o);
+    }
+  }
+})();
+
+(function initKzDate() {
   const y = document.getElementById('kzYear');
   const m = document.getElementById('kzMonth');
   const d = document.getElementById('kzDay');
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const day = today.getDate();
   if (y) {
-    y.innerHTML = '<option value="">-- 選擇 --</option>';
-    for (let i = 2020; i <= 2035; i++) {
-      y.innerHTML += '<option value="' + i + '">' + i + ' 年</option>';
+    for (var v = 2020; v <= 2035; v++) {
+      var o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + ' 年';
+      y.appendChild(o);
     }
+    y.value = year.toString();
   }
   if (m) {
-    m.innerHTML = '<option value="">-- 選擇 --</option>';
-    for (let i = 1; i <= 12; i++) {
-      m.innerHTML += '<option value="' + (i < 10 ? '0' + i : i) + '">' + i + ' 月</option>';
+    for (var v = 1; v <= 12; v++) {
+      var o = document.createElement('option');
+      o.value = v < 10 ? '0' + v : v;
+      o.textContent = v + '月';
+      m.appendChild(o);
     }
+    m.value = month < 10 ? '0' + month : month.toString();
   }
   if (d) {
-    d.innerHTML = '<option value="">-- 選擇 --</option>';
-    for (let i = 1; i <= 31; i++) {
-      d.innerHTML += '<option value="' + (i < 10 ? '0' + i : i) + '">' + i + ' 日</option>';
+    for (var v = 1; v <= 31; v++) {
+      var o = document.createElement('option');
+      o.value = v < 10 ? '0' + v : v;
+      o.textContent = v + '日';
+      d.appendChild(o);
     }
+    d.value = day < 10 ? '0' + day : day.toString();
   }
-  // 預設今天
-  const now = new Date();
-  if (y) y.value = now.getFullYear();
-  if (m) m.value = String(now.getMonth() + 1).padStart(2, '0');
-  if (d) d.value = String(now.getDate()).padStart(2, '0');
-  // 載入記錄
-  const items = kzLoad();
-  renderKzLog(items);
-  if (SYNC_URL) {
-    showSyncStatus('後端已設定，記錄將同步至後端', '');
-  } else {
-    showSyncStatus('⚪ 未設定後端', '');
+})();
+
+(function initApp() {
+  try {
+    const items = kzLoad();
+    renderKzLog(items);
+    if (!SYNC_URL) {
+      showSyncStatus('⚪ 不安全模式: 尚未設定後端，僅存本機', '');
+    } else {
+      showSyncStatus('🔄 後端已設定，記錄將同步至後端', 'ok');
+    }
+  } catch (e) {
+    showSyncStatus('❌ 初始化失敗', 'err');
+    console.error('initApp error:', e);
   }
 })();
 </script>
