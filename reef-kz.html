@@ -32,7 +32,7 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
 <div class="wrap">
   <header>
     <h1>💧 KZ 滴定機記錄</h1>
-    <p>獨立頁面 · 完整記錄功能 · 支援手機/平板自動同步</p>
+    <p>獨立頁面 · 完整記錄功能 · 支援手機/平板自動同步（後端轉發）</p>
   </header>
   <div class="card">
     <h2>📋 新增記錄</h2>
@@ -243,165 +243,15 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
     <div id="syncStatus" class="sync-status">⏳ 載入中...</div>
   </div>
 </div>
-<script src="https://eu-central-1.aws.website-defence.snap.cloud/https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// === 設定頁面層級 Supabase 連線 ===
-// 請先到 Supabase 建立專案，把項目填入下方
-// 示範：
-//   supabaseUrl = 'https://xxx.supabase.co'
-//   supabaseAnonKey = 'eyJ...'
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
-
-let supabase = null;
-
-function initSupabase() {
-  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-    try {
-      supabase = window['supabase-js'] ? window['supabase-js'].createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-      if (supabase) {
-        return supabase;
-      } else {
-        document.getElementById('syncStatus').innerText = '⚠️ 找不到 Supabase 套件，請檢查網路';
-        document.getElementById('syncStatus').className = 'sync-status err';
-        return null;
-      }
-    } catch(e) {
-      document.getElementById('syncStatus').innerText = '⚠️ Supabase 初始化失敗: ' + e.message;
-      document.getElementById('syncStatus').className = 'sync-status err';
-      return null;
-    }
-  } else {
-    document.getElementById('syncStatus').innerText = '⚪ 待設定: 請在 script 頂端填入 Supabase URL 與 Anon Key';
-    document.getElementById('syncStatus').className = 'sync-status';
-    return null;
-  }
-}
-
-const KZ_TABLE = 'kz_log';
-
-function getSupabase() {
-  if (!supabase) {
-    supabase = initSupabase();
-  }
-  return supabase;
-}
-
-function uid() {
-  return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
-}
+const SYNC_URL = ''; // 部署後填：你的後端網址，例如：https://your-project.vercel.app/api/kz-sync
+const LOCAL_KEY = 'kz_log_v1';
 
 function showSyncStatus(msg, type) {
   const el = document.getElementById('syncStatus');
-  if (el) {
-    el.innerText = msg;
-    el.className = 'sync-status ' + (type || '');
-  }
-}
-
-async function kzSaveToSupabase(rec) {
-  const sb = getSupabase();
-  if (!sb) return false;
-  try {
-    const { error } = await sb.from(KZ_TABLE).insert([
-      {
-        id: uid(),
-        d: rec.d,
-        bak: rec.bak,
-        sp: rec.sp,
-        s3: rec.s3,
-        note: rec.note,
-        created_at: new Date().toISOString()
-      }
-    ]);
-    if (error) {
-      console.error('Supabase save error', error);
-      showSyncStatus('⚠️ 寫入失敗: ' + error.message, 'err');
-      return false;
-    }
-    showSyncStatus('✅ 已同步至 Supabase', 'ok');
-    return true;
-  } catch (e) {
-    console.error('Supabase save exception', e);
-    showSyncStatus('⚠️ 寫入失敗: ' + e.message, 'err');
-    return false;
-  }
-}
-
-async function kzLoadFromSupabase() {
-  const sb = getSupabase();
-  if (!sb) return [];
-  try {
-    showSyncStatus('⏳ 載入中...');
-    const { data, error } = await sb.from(KZ_TABLE).select('*').order('created_at', { ascending: false });
-    if (error) {
-      console.error('Supabase load error', error);
-      showSyncStatus('⚠️ 載入失敗: ' + error.message, 'err');
-      return [];
-    }
-    showSyncStatus('✅ 已載入 ' + (data ? data.length : 0) + ' 筆');
-    return data || [];
-  } catch (e) {
-    console.error('Supabase load exception', e);
-    showSyncStatus('⚠️ 載入失敗: ' + e.message, 'err');
-    return [];
-  }
-}
-
-async function kzDeleteFromSupabase(id) {
-  const sb = getSupabase();
-  if (!sb) return false;
-  try {
-    const { error } = await sb.from(KZ_TABLE).delete().eq('id', id);
-    if (error) {
-      console.error('Supabase delete error', error);
-      showSyncStatus('⚠️ 刪除失敗: ' + error.message, 'err');
-      return false;
-    }
-    showSyncStatus('✅ 已從 Supabase 刪除 ' + id, 'ok');
-    return true;
-  } catch (e) {
-    console.error('Supabase delete exception', e);
-    showSyncStatus('⚠️ 刪除失敗: ' + e.message, 'err');
-    return false;
-  }
-}
-
-async function kzClearFromSupabase() {
-  const sb = getSupabase();
-  if (!sb) return false;
-  try {
-    const { error } = await sb.from(KZ_TABLE).delete().eq('id', 'temp-purge');
-    if (error) {
-      console.error('Supabase clear error', error);
-      showSyncStatus('⚠️ 清空失敗: ' + error.message, 'err');
-      return false;
-    }
-    showSyncStatus('✅ 已從 Supabase 清空', 'ok');
-    return true;
-  } catch (e) {
-    console.error('Supabase clear exception', e);
-    showSyncStatus('⚠️ 清空失敗: ' + e.message, 'err');
-    return false;
-  }
-}
-
-function renderKzLog(items) {
-  const box = document.getElementById('kzLog');
-  if (!box) return;
-  if (!items || !items.length) {
-    box.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>';
-    return;
-  }
-  box.innerHTML = items.map(function(r, i) {
-    const parts = [];
-    if (r.bak) parts.push('Bak:' + r.bak + '滴');
-    if (r.sp) parts.push('Sp:' + r.sp + '滴');
-    if (r.s3) parts.push('S3:' + r.s3 + 'ml');
-    const createdAt = r.created_at ? new Date(r.created_at).toLocaleString('zh-TW', {hour12: false}) : '';
-    const logId = r.id || i;
-    return '<div class="logitem"><b>' + escapeHtml(r.d || '') + '</b> ' + (r.note ? ' · ' + escapeHtml(r.note) : '') + '<br><span style="color:var(--cyan);font-weight:600;">' + parts.join(' / ') + '</span>' + (createdAt ? '<br><span style="font-size:11px;color:var(--dim);">' + escapeHtml(createdAt) + '</span>' : '') + '<br><span style="float:right;margin-top:4px;"><button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button><button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button></span></div>';
-  }).join('');
+  if (!el) return;
+  el.innerText = msg;
+  el.className = 'sync-status ' + (type || '');
 }
 
 function escapeHtml(str) {
@@ -411,20 +261,20 @@ function escapeHtml(str) {
 
 function kzLoad() {
   try {
-    return JSON.parse(localStorage.getItem('kz_log_v1') || '[]');
-  } catch(e) {
+    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+  } catch (e) {
     return [];
   }
 }
 
 function kzSaveData(a) {
   try {
-    localStorage.setItem('kz_log_v1', JSON.stringify(a));
-  } catch(e) {}
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(a));
+  } catch (e) {}
 }
 
 function kzNewId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
 }
 
 function alert(msg) {
@@ -440,7 +290,103 @@ function confirm(msg) {
   return true;
 }
 
-function kzSave() {
+async function postJSON(url, payload) {
+  const opts = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  } catch (e) {
+    return { ok: false, status: 0, data: { error: 'Network error' } };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function deleteJSON(url) {
+  if (!SYNC_URL) return true;
+  try {
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    return res.ok;
+  } catch (e) {
+    console.error('Delete request failed:', e);
+    return false;
+  }
+}
+
+// 本地先存，然後發到後端
+async function kzSaveToBackend(rec) {
+  if (!SYNC_URL) return true;
+  const payload = {
+    d: rec.d || new Date().toISOString().slice(0, 10),
+    bak: rec.bak || null,
+    sp: rec.sp || null,
+    s3: rec.s3 || null,
+    note: rec.note || null,
+  };
+  const res = await postJSON(SYNC_URL, payload);
+  if (res.ok && res.status === 200 && res.data && res.data.success) {
+    showSyncStatus('✅ 已同步至後端: ' + res.data.id, 'ok');
+    return true;
+  }
+  showSyncStatus('❌ 本地存了，但同步失敗', 'err');
+  return false;
+}
+
+// 刪除本地 + 請後端刪
+async function kzRemoveFromBackend(id) {
+  if (!SYNC_URL) return true;
+  if (!id) return true;
+  const res = await fetch(SYNC_URL + '/' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  const data = await res.json();
+  if (res.ok && data && data.success) {
+    showSyncStatus('✅ 已從後端刪除: ' + id, 'ok');
+    return true;
+  }
+  showSyncStatus('❌ 已刪本地，但後端刪除失敗', 'err');
+  return false;
+}
+
+function renderKzLog(items) {
+  const box = document.getElementById('kzLog');
+  if (!box) return;
+  if (!items || !items.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>';
+    return;
+  }
+  box.innerHTML = items.map(function(r, i) {
+    const parts = [];
+    if (r.bak) parts.push('Bak:' + r.bak + '滴');
+    if (r.sp) parts.push('Sp:' + r.sp + '滴');
+    if (r.s3) parts.push('S3:' + r.s3 + 'ml');
+    const createdAt = r.created_at ? new Date(r.created_at).toLocaleString('zh-TW', { hour12: false }) : '';
+    return '<div class="logitem">'
+      + '<b>' + escapeHtml(r.d || '') + '</b> '
+      + (r.note ? ' · ' + escapeHtml(r.note) : '')
+      + '<br><span style="color:var(--cyan);font-weight:600;">' + parts.join(' / ') + '</span>'
+      + (createdAt ? '<br><span style="font-size:11px;color:var(--dim);margin-top:4px;">' + escapeHtml(createdAt) + '</span>' : '')
+      + '<br><span style="float:right;margin-top:4px;">'
+      + '<button onclick="kzEdit(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--cyan);border:none;border-radius:4px;color:#04121f;cursor:pointer;margin-right:4px;">編輯</button>'
+      + '<button onclick="kzDelete(' + i + ')" style="font-size:10px;padding:2px 6px;background:var(--pink);border:none;border-radius:4px;color:#fff;cursor:pointer;">刪除</button>'
+      + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+async function kzSave() {
   try {
     const y = document.getElementById('kzYear') ? document.getElementById('kzYear').value : '';
     const m = document.getElementById('kzMonth') ? document.getElementById('kzMonth').value : '';
@@ -466,7 +412,7 @@ function kzSave() {
     a.unshift(rec);
     kzSaveData(a);
 
-    const saved = kzSaveToSupabase(rec);
+    const saved = await kzSaveToBackend(rec);
     renderKzLog(a);
 
     document.getElementById('kzBak').value = '';
@@ -474,7 +420,7 @@ function kzSave() {
     document.getElementById('kzS3').value = '';
     document.getElementById('kzNote').value = '';
     if (saved) {
-      alert('已儲存 KZ 記錄（「存一筆」+「同步庫」）');
+      alert('已儲存 KZ 記錄（本地 + 同步庫）');
     } else {
       alert('已儲存本地備份，只同步失敗');
     }
@@ -483,6 +429,7 @@ function kzSave() {
     alert('儲存失敗：' + e.message);
   }
 }
+
 
 function kzEdit(i) {
   const a = kzLoad();
@@ -504,13 +451,16 @@ function kzEdit(i) {
 function kzDelete(i) {
   if (!confirm('確定刪除此筆 KZ 記錄？')) return;
   const a = kzLoad();
-  if (i >= 0 && i < a.length) {
-    const r = a[i];
-    const ok = kzDeleteFromSupabase(r.id);
-    a.splice(i, 1);
-    kzSaveData(a);
-    renderKzLog(a);
-    alert('已刪除本地記錄，已同步刪除 Supabase: ' + ok);
+  if (i < 0 || i >= a.length) return;
+  const r = a[i];
+  const ok = kzRemoveFromBackend(r.id);
+  a.splice(i, 1);
+  kzSaveData(a);
+  renderKzLog(a);
+  if (ok) {
+    alert('已刪除本地記錄，已同步後端');
+  } else {
+    alert('已刪除本地記錄，但後端刪除失敗');
   }
 }
 
@@ -519,8 +469,24 @@ function kzClear() {
   const a = kzLoad();
   kzSaveData(a);
   renderKzLog(a);
-  const ok = kzClearFromSupabase();
-  alert('已清空本地記錄，已同步清空 Supabase: ' + ok);
+  if (!SYNC_URL) {
+    showSyncStatus('⚪ 未設定後端: 請在 SYNC_URL 填入後端網址', '');
+    alert('已清空本地記錄，但沒有後端，同步不會運作。');
+    return;
+  }
+  const ids = a.map(function(r) { return r.id; });
+  Promise.all(ids.map(function(id) {
+    return deleteJSON(SYNC_URL + '/' + encodeURIComponent(id));
+  })).then(function(results) {
+    const failed = results.filter(function(x) { return !x; });
+    if (failed.length === 0) {
+      showSyncStatus('✅ 已清空後端', 'ok');
+    } else {
+      showSyncStatus('⚠️ 本地清空完成，後端清空部分失敗', 'err');
+    }
+  }).catch(function(e) {
+    showSyncStatus('❌ 清空過程中發生錯誤', 'err');
+  });
 }
 
 (function initKzOpts() {
@@ -562,7 +528,6 @@ function kzClear() {
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
   const day = today.getDate();
-
   if (y) {
     for (var v = 2020; v <= 2035; v++) {
       var o = document.createElement('option');
@@ -592,11 +557,19 @@ function kzClear() {
   }
 })();
 
-// 初始化：載入遠端 Supabase 並顯示
 (function initApp() {
-  kzLoadFromSupabase().then(function(items) {
+  try {
+    const items = kzLoad();
     renderKzLog(items);
-  });
+    if (!SYNC_URL) {
+      showSyncStatus('⚪ 不安全模式: 尚未設定後端，僅存本機', '');
+    } else {
+      showSyncStatus('🔄 後端已設定，記錄將同步至後端', 'ok');
+    }
+  } catch (e) {
+    showSyncStatus('❌ 初始化失敗', 'err');
+    console.error('initApp error:', e);
+  }
 })();
 </script>
 </body>
