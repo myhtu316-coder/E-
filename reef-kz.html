@@ -88,14 +88,7 @@ function kzSave() {
     document.getElementById('kzNote').value = '';
     alert('已儲存 KZ 記錄（共 ' + a.length + ' 筆，獨立於主網頁）');
   } catch (e) { console.error('kzSave error:', e); alert('儲存失敗：' + e.message); }
-  } catch (e) { console.error('kzSave error:', e); alert('儲存失敗：' + e.message); }
-}
-function kzRender() {
-  try {
-    const a = kzLoad();
-    const box = document.getElementById('kzLog');
-    if (!box) return;
-    if (!a.length) { box.innerHTML = '<div style="font-size:12px;color:var(--dim);padding:10px;">還沒有 KZ 記錄</div>'; return; }
+
     box.innerHTML = a.map(function(r, i) {
       const parts = [];
       if (r.bak) parts.push('Bak:' + r.bak + '滴');
