@@ -792,39 +792,72 @@ document.getElementById('clrBtn').onclick=async()=>{
   }
 };
 
-/* 匯入 CSV（相容哥哥現有格式：date,time,kh,ca,mg,no3,po4,sg,la_ml,vodka_ml,note） */
+/* 匯入 CSV（支援中文/英文表頭、正確解析含逗號欄位） */
 document.getElementById('impBtn').onclick=()=>document.getElementById('impFile').click();
 document.getElementById('impFile').onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
   const rd=new FileReader();
   rd.onload=()=>{
-    const lines=rd.result.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+    const text=rd.result.replace(/^﻿/,'');
+    // 正確解析 CSV（處理引號內的逗號）
+    const lines=parseCSV(text);
     if(!lines.length){alert('檔案是空的');return;}
-    const head=lines[0].split(',').map(h=>h.trim());
-    const idx=k=>head.findIndex(h=>h.toLowerCase()===k);
-    const ci={date:idx('date'),time:idx('time'),kh:idx('kh'),ca:idx('ca'),mg:idx('mg'),
-      no3:idx('no3'),po4:idx('po4'),sg:idx('sg'),la:idx('la_ml'),vodka:idx('vodka_ml'),note:idx('note')};
+    const head=lines[0].map(h=>h.trim());
+    // 中英對照表
+    const map={
+      date:['date','日期'], time:['time','時間'], temp:['temp','水溫','temperature'],
+      kh:['kh','kh','KH'], ca:['ca','ca','Ca'], mg:['mg','mg','Mg'],
+      no3:['no3','no3','NO3'], po4:['po4','po4','PO4','PO4_換水前'],
+      sg:['sg','sg','比重'], note:['note','備註','note']
+    };
+    const idx=k=>head.findIndex(h=>map[k]?.includes(h));
+    const ci={date:idx('date'), time:idx('time'), temp:idx('temp'),
+      kh:idx('kh'), ca:idx('ca'), mg:idx('mg'),
+      no3:idx('no3'), po4:idx('po4'), sg:idx('sg'), note:idx('note')};
     const get=(row,k)=>ci[k]>=0?(row[ci[k]]||'').trim():'';
-    const rows=lines.slice(1).map(l=>l.split(','));
-    const imported=rows.map(row=>{
+    const imported=lines.slice(1).map(row=>{
       let d=get(row,'date');
       const t=get(row,'time');
-      if(d && t) d=d+' '+t;       // 合併 date + time
-      return {d, temp:'', kh:get(row,'kh'), ca:get(row,'ca'), mg:get(row,'mg'),
-        no3:get(row,'no3'), po4:get(row,'po4'), sg:get(row,'sg'),
-        la:get(row,'la'), vodka:get(row,'vodka'), note:get(row,'note'),
+      if(d && t) d=d+' '+t;
+      const tmp=get(row,'temp');
+      return {d, temp:tmp, kh:get(row,'kh'), ca:get(row,'ca'), mg:get(row,'mg'),
+        no3:get(row,'no3'), po4:get(row,'po4'), sg:get(row,'sg'), note:get(row,'note'),
         id:newId(), mtime:Date.now()};
-    }).filter(r=>r.d||r.kh||r.ca||r.mg||r.no3||r.po4||r.sg||r.note);
+    }).filter(r=>r.d||r.temp||r.kh||r.ca||r.mg||r.no3||r.po4||r.sg||r.note);
     if(!imported.length){alert('沒有可匯入的資料列');return;}
     if(!confirm(`要匯入 ${imported.length} 筆紀錄嗎？\n（會加到現有列表前面，不會刪掉原有資料）`))return;
     const a=load();
-    imported.reverse().forEach(r=>a.unshift(r));   // 保持日期由新到舊
+    imported.reverse().forEach(r=>a.unshift(r));
     save(a);renderLog();maybeAutoSync();
     alert(`✅ 匯入 ${imported.length} 筆成功！`);
   };
   rd.readAsText(f,'utf-8');
   e.target.value='';
 };
+
+// 正確解析 CSV（支援引號、逗號、換行）
+function parseCSV(text){
+  const lines=[]; let cur=[]; let field=''; let inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='\n' || ch==='\r'){
+      if(text[i+1]==='\r' && ch==='\n') i++; // CRLF
+      if(inQuotes){ field+='\n'; continue; }
+      cur.push(field); lines.push(cur); cur=[]; field=''; continue;
+    }
+    if(ch===','){
+      if(inQuotes){ field+=','; continue; }
+      cur.push(field); field=''; continue;
+    }
+    if(ch==='"'){
+      if(inQuotes && text[i+1]==='"'){ field+='"'; i++; continue; }
+      inQuotes=!inQuotes; continue;
+    }
+    field+=ch;
+  }
+  if(field || cur.length){ cur.push(field); lines.push(cur); }
+  return lines;
+}
 
 /* ===== 雲端同步（Supabase 直接存取，無需 PAT）===== */
 const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
