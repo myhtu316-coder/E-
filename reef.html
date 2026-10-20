@@ -913,10 +913,10 @@ async function doSync() {
       if (saved?.id) rec._sb_id = saved.id;
     }
 
-    // 同步完成後，將 _sb_id 寫回 localStorage
+    // 同步完成後，保留 _sb_id 到 localStorage（刪除時需要）
     const finalLog = mergedLog.map(r => {
       const out = { ...r };
-      delete out._sb_id; // 不存 _sb_id 到本地，只在記憶體用
+      // 保留 _sb_id，刪除時用來呼叫 sbDelete
       return out;
     });
     save(finalLog);
