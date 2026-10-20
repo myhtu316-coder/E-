@@ -732,9 +732,9 @@ function renderLog(){
       `<span class="edit" data-i="${i}">編輯</span>`+
       `<b>${r.d}</b> ${r.note?`· ${r.note}`:''}<br><span class="hint">${cells||'（無數值）'}</span></div>`;
   }).join('');
-  box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{
+  box.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
     const arr=load();const removed=arr.splice(+b.dataset.i,1)[0];save(arr);
-    if(removed&&removed.id)addDeleted(removed.id);
+    if(removed && removed._sb_id){ try{ await sbDelete(removed._sb_id); }catch(e){console.warn('刪除雲端失敗',e);} }
     renderLog();maybeAutoSync();
   });
   box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>{
@@ -890,6 +890,16 @@ async function doSync() {
       if (da !== db) return da < db ? 1 : -1;
       return (b.mtime || 0) - (a.mtime || 0);
     });
+
+    // 刪除：雲端有但本地沒有（且不是新增） → 刪雲端
+    const localIds = new Set(localLog.filter(r => r && r.id && !r.id.startsWith('new_')).map(r => r.id));
+    for (const cloudRec of cloudLog) {
+      const cid = cloudRec.data?.id;
+      const sbid = cloudRec.id;
+      if (cid && !localIds.has(cid) && !cid.startsWith('new_')) {
+        try { await sbDelete(sbid); } catch (e) { console.warn('同步刪除雲端失敗', e); }
+      }
+    }
 
     // 逐筆上傳（簡單可靠，數量少時 OK）
     for (const rec of mergedLog) {
