@@ -888,8 +888,19 @@ async function doSync() {
     // 以雲端為準，合併本地新增/編輯
     // 雲端用 _sb_id (Supabase UUID) 做 key，本地用 id 做 key
     const map = {};
-    cloudLog.forEach(r => { if (r && r.data && r.data.id) map[r.data.id] = { ...r.data, _sb_id: r.id }; });
-    localLog.forEach(r => { if (r && r.id && !r.id.startsWith('new_')) { const ex = map[r.id]; if (!ex || (r.mtime || 0) >= (ex.mtime || 0)) map[r.id] = { ...r, _sb_id: ex?._sb_id }; } });
+    const cloudIds = new Set();
+    cloudLog.forEach(r => { if (r && r.data && r.data.id) { map[r.data.id] = { ...r.data, _sb_id: r.id }; cloudIds.add(r.data.id); } });
+    localLog.forEach(r => { 
+      if (r && r.id && !r.id.startsWith('new_')) { 
+        const ex = map[r.id]; 
+        // 本地有但雲端無，且有 _sb_id → 視為已被其他裝置刪除，不加入 map
+        if (!ex && r._sb_id && !cloudIds.has(r.id)) {
+          console.log('本地資料雲端無且有 _sb_id，判定為已刪除:', r.id);
+          return; 
+        }
+        if (!ex || (r.mtime || 0) >= (ex.mtime || 0)) map[r.id] = { ...r, _sb_id: ex?._sb_id }; 
+      } 
+    });
     
     const mergedLog = Object.values(map).sort((a, b) => {
       const da = (a.d || '').toString(), db = (b.d || '').toString();
