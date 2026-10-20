@@ -289,8 +289,8 @@
     <div class="card">
       <h2>☁️ 同步設定</h2>
       <label>GitHub 個人存取權杖（PAT）</label>
-      <input id="syncToken" type="password" placeholder="貼上你的 classic PAT（需要 repo 權限）" autocomplete="off">
-      <div class="hint">🔐 建法：GitHub 網頁 → 右上頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token（勾 <b>repo</b>）→ 複製貼這裡。只存在你這台手機，不會寫進任何程式碼。</div>
+      <input id="syncToken" type="password" placeholder="貼上你的 classic PAT（需要 gist 權限）" autocomplete="off">
+      <div class="hint">🔐 建法：GitHub 網頁 → 右上頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token（勾 <b>gist</b>）→ 複製貼這裡。只存在你這台手機，不會寫進任何程式碼。</div>
 
       <label style="margin-top:14px">同步狀態</label>
       <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
@@ -301,7 +301,7 @@
       </div>
 
       <button class="btn ghost" id="autoSyncBtn" style="margin-top:14px">自動同步：關</button>
-      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到雲端私人倉庫 <b>myhtu316-coder/reef-sync</b>，換手機也不怕不見。</div>
+      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到 GitHub Gist（私人），換手機也不怕不見。若無 GIST_ID 會自動建立。</div>
     </div>
   </section>
 
@@ -801,34 +801,44 @@ document.getElementById('impFile').onchange=e=>{
   e.target.value='';
 };
 
-/* ===== 雲端同步（私人倉庫 + PAT，存在瀏覽器 localStorage）===== */
-const SYNC_REPO='myhtu316-coder/reef-sync';
-const SYNC_FILE='reef_log.json';
-const TOKEN_KEY='reef_sync_token';
-const DEL_KEY='reef_del_v1';
-const AUTO_KEY='reef_sync_auto';
-const STATUS_KEY='reef_sync_status';
+/* ===== 雲端同步（GitHub Gist + PAT，存在瀏覽器 localStorage）===== */
+// 請先在 GitHub 建立一個 Gist（可秘密），把 ID 貼在這裡；或留空由「測試連線」自動建立
+const GIST_ID = ''; // 例：'abc123def456'，留空則自動建立
+const GIST_FILENAME = 'reef_log.json';
+const TOKEN_KEY = 'reef_sync_token';
+const DEL_KEY = 'reef_del_v1';
+const AUTO_KEY = 'reef_sync_auto';
+const STATUS_KEY = 'reef_sync_status';
+const GIST_ID_KEY = 'reef_gist_id';
 function getToken(){return localStorage.getItem(TOKEN_KEY)||''}
+function getGistId(){return localStorage.getItem(GIST_ID_KEY) || GIST_ID}
+function setGistId(id){localStorage.setItem(GIST_ID_KEY, id)}
 function getDeleted(){try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]}}
 function addDeleted(id){const d=getDeleted();if(!d.includes(id)){d.push(id);localStorage.setItem(DEL_KEY,JSON.stringify(d))}}
-function b64dec(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,''))))}
-function b64enc(s){return btoa(unescape(encodeURIComponent(s)))}
 function setStatus(txt,ok){const el=document.getElementById('syncStatus');if(el)el.innerHTML=txt;localStorage.setItem(STATUS_KEY,JSON.stringify({txt,ok}));}
 async function ghGet(){
-  const tok=getToken();if(!tok)throw new Error('沒有 token');
-  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});
-  if(r.status===404)return null;
-  if(!r.ok)throw new Error('讀取雲端失敗：'+r.status);
-  const j=await r.json();
-  return {sha:j.sha,data:JSON.parse(b64dec(j.content))};
+  const tok=getToken(); if(!tok) throw new Error('沒有 token');
+  const gid = getGistId(); if(!gid) return null; // 尚未建立 Gist
+  const r = await fetch(`https://api.github.com/gists/${gid}`, {headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});
+  if(r.status===404){ setGistId(''); return null; }
+  if(!r.ok) throw new Error('讀取 Gist 失敗：'+r.status);
+  const j = await r.json();
+  const file = j.files && j.files[GIST_FILENAME];
+  if(!file) return {data:{log:[],deleted:[]}};
+  return {data:JSON.parse(file.content)};
 }
-async function ghPut(content,sha){
-  const tok=getToken();if(!tok)throw new Error('沒有 token');
-  const body={message:'reef sync '+new Date().toISOString(),content:b64enc(content)};
-  if(sha)body.sha=sha;
-  const r=await fetch(`https://api.github.com/repos/${SYNC_REPO}/contents/${SYNC_FILE}`,{method:'PUT',headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'},body:JSON.stringify(body)});
-  if(!r.ok)throw new Error('寫入雲端失敗：'+r.status);
-  return r.json();
+async function ghPut(payload){
+  const tok=getToken(); if(!tok) throw new Error('沒有 token');
+  let gid = getGistId();
+  const body = {files:{[GIST_FILENAME]:{content:JSON.stringify(payload)}}};
+  let url = 'https://api.github.com/gists';
+  let method = 'POST';
+  if(gid){ url = `https://api.github.com/gists/${gid}`; method = 'PATCH'; }
+  const r = await fetch(url, {method, headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'}, body:JSON.stringify(body)});
+  if(!r.ok) throw new Error((method==='POST'?'建立':'更新')+' Gist 失敗：'+r.status);
+  const j = await r.json();
+  if(!getGistId()) setGistId(j.id); // 首次建立時記住 ID
+  return j;
 }
 async function doSync(){
   if(!getToken()){setStatus('⚠️ 先貼上 PAT 才能同步',false);return;}
