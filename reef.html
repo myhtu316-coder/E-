@@ -835,9 +835,12 @@ async function ghPut(payload){
   let method = 'POST';
   if(gid){ url = `https://api.github.com/gists/${gid}`; method = 'PATCH'; }
   const r = await fetch(url, {method, headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'}, body:JSON.stringify(body)});
-  if(!r.ok) throw new Error((method==='POST'?'建立':'更新')+' Gist 失敗：'+r.status);
+  if(!r.ok){
+    const errText = await r.text();
+    throw new Error((method==='POST'?'建立':'更新')+' Gist 失敗：'+r.status+' '+r.statusText+' — '+errText);
+  }
   const j = await r.json();
-  if(!getGistId()) setGistId(j.id); // 首次建立時記住 ID
+  if(!getGistId()) setGistId(j.id);
   return j;
 }
 async function doSync(){
