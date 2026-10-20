@@ -288,9 +288,7 @@
 
     <div class="card">
       <h2>☁️ 同步設定</h2>
-      <label>GitHub 個人存取權杖（PAT）</label>
-      <input id="syncToken" type="password" placeholder="貼上你的 classic PAT（需要 gist 權限）" autocomplete="off">
-      <div class="hint">🔐 建法：GitHub 網頁 → 右上頭像 → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token（勾 <b>gist</b>）→ 複製貼這裡。只存在你這台手機，不會寫進任何程式碼。</div>
+      <div class="hint">☁️ 使用 Supabase 雲端資料庫同步，無需輸入 Token。裝置 ID 自動生成並儲存在本機。</div>
 
       <label style="margin-top:14px">同步狀態</label>
       <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
@@ -301,7 +299,7 @@
       </div>
 
       <button class="btn ghost" id="autoSyncBtn" style="margin-top:14px">自動同步：關</button>
-      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到 GitHub Gist（私人），換手機也不怕不見。若無 GIST_ID 會自動建立。</div>
+      <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到 Supabase 雲端，換手機也不怕不見。</div>
     </div>
   </section>
 
@@ -801,96 +799,136 @@ document.getElementById('impFile').onchange=e=>{
   e.target.value='';
 };
 
-/* ===== 雲端同步（GitHub Gist + PAT，存在瀏覽器 localStorage）===== */
-// 請先在 GitHub 建立一個 Gist（可秘密），把 ID 貼在這裡；或留空由「測試連線」自動建立
-const GIST_ID = ''; // 例：'abc123def456'，留空則自動建立
-const GIST_FILENAME = 'reef_log.json';
-const TOKEN_KEY = 'reef_sync_token';
-const DEL_KEY = 'reef_del_v1';
+/* ===== 雲端同步（Supabase 直接存取，無需 PAT）===== */
+const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
+const DEVICE_ID_KEY = 'reef_device_id';
 const AUTO_KEY = 'reef_sync_auto';
 const STATUS_KEY = 'reef_sync_status';
-const GIST_ID_KEY = 'reef_gist_id';
-function getToken(){return localStorage.getItem(TOKEN_KEY)||''}
-function getGistId(){return localStorage.getItem(GIST_ID_KEY) || GIST_ID}
-function setGistId(id){localStorage.setItem(GIST_ID_KEY, id)}
-function getDeleted(){try{return JSON.parse(localStorage.getItem(DEL_KEY))||[]}catch(e){return[]}}
-function addDeleted(id){const d=getDeleted();if(!d.includes(id)){d.push(id);localStorage.setItem(DEL_KEY,JSON.stringify(d))}}
-function setStatus(txt,ok){const el=document.getElementById('syncStatus');if(el)el.innerHTML=txt;localStorage.setItem(STATUS_KEY,JSON.stringify({txt,ok}));}
-async function ghGet(){
-  const tok=getToken(); if(!tok) throw new Error('沒有 token');
-  const gid = getGistId(); if(!gid) return null; // 尚未建立 Gist
-  const r = await fetch(`https://api.github.com/gists/${gid}`, {headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});
-  if(r.status===404){ setGistId(''); return null; }
-  if(!r.ok) throw new Error('讀取 Gist 失敗：'+r.status);
-  const j = await r.json();
-  const file = j.files && j.files[GIST_FILENAME];
-  if(!file) return {data:{log:[],deleted:[]}};
-  return {data:JSON.parse(file.content)};
-}
-async function ghPut(payload){
-  const tok=getToken(); if(!tok) throw new Error('沒有 token');
-  let gid = getGistId();
-  const body = {files:{[GIST_FILENAME]:{content:JSON.stringify(payload)}}};
-  let url = 'https://api.github.com/gists';
-  let method = 'POST';
-  if(gid){ url = `https://api.github.com/gists/${gid}`; method = 'PATCH'; }
-  const r = await fetch(url, {method, headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'reef-tool'}, body:JSON.stringify(body)});
-  if(!r.ok){
-    const errText = await r.text();
-    throw new Error((method==='POST'?'建立':'更新')+' Gist 失敗：'+r.status+' '+r.statusText+' — '+errText);
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+    localStorage.setItem(DEVICE_ID_KEY, id);
   }
-  const j = await r.json();
-  if(!getGistId()) setGistId(j.id);
-  return j;
+  return id;
 }
-async function doSync(){
-  if(!getToken()){setStatus('⚠️ 先貼上 PAT 才能同步',false);return;}
-  setStatus('🔄 同步中…',null);
-  try{
-    const localLog=load();
-    const localDel=getDeleted();
-    const cloud=await ghGet();
-    const cLog=cloud?(cloud.data.log||[]):[];
-    const cDel=cloud?(cloud.data.deleted||[]):[];
-    const mergedDel=Array.from(new Set([...localDel,...cDel]));
-    const map={};
-    cLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id))map[r.id]={...r}});
-    localLog.forEach(r=>{if(r&&r.id&&!mergedDel.includes(r.id)){const ex=map[r.id];if(!ex||(r.mtime||0)>=(ex.mtime||0))map[r.id]={...r}}});
-    const mergedLog=Object.values(map).sort((a,b)=>{
-      const da=(a.d||'').toString(),db=(b.d||'').toString();
-      if(da!==db)return da<db?1:-1;
-      return (b.mtime||0)-(a.mtime||0);
+
+function setStatus(txt, ok) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.innerHTML = txt;
+  localStorage.setItem(STATUS_KEY, JSON.stringify({txt, ok}));
+}
+
+async function sbRequest(path, options = {}) {
+  const url = SUPABASE_URL + '/rest/v1' + path;
+  const headers = {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...(options.headers || {})
+  };
+  const r = await fetch(url, { ...options, headers });
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(r.status + ' ' + r.statusText + ' — ' + err);
+  }
+  return r.json();
+}
+
+async function sbLoadAll() {
+  const deviceId = getDeviceId();
+  const data = await sbRequest('/reef_log?device_id=eq.' + deviceId + '&order=created_at.desc&limit=2000');
+  return data || [];
+}
+
+async function sbUpsert(record) {
+  const deviceId = getDeviceId();
+  const payload = {
+    device_id: deviceId,
+    data: record,
+    updated_at: new Date().toISOString()
+  };
+  // 如果有 id 且不是新生成的，用 upsert (on conflict id)
+  if (record.id && !record.id.startsWith('new_')) {
+    const data = await sbRequest('/reef_log?id=eq.' + record.id, { method: 'PATCH', body: JSON.stringify(payload) });
+    return data[0];
+  } else {
+    // 新增：不帶 id，讓資料庫生成 uuid
+    const { id, ...rest } = payload;
+    const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(rest) });
+    return data[0];
+  }
+}
+
+async function sbDelete(id) {
+  const deviceId = getDeviceId();
+  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + deviceId, { method: 'DELETE' });
+}
+
+async function doSync() {
+  setStatus('🔄 同步中…', null);
+  try {
+    const localLog = load();
+    const cloudLog = await sbLoadAll();
+    
+    // 以雲端為準，合併本地新增/編輯
+    const map = {};
+    cloudLog.forEach(r => { if (r && r.data && r.data.id) map[r.data.id] = { ...r.data, _sb_id: r.id }; });
+    localLog.forEach(r => { if (r && r.id && !r.id.startsWith('new_')) { const ex = map[r.id]; if (!ex || (r.mtime || 0) >= (ex.mtime || 0)) map[r.id] = { ...r, _sb_id: ex?._sb_id }; } });
+    
+    const mergedLog = Object.values(map).sort((a, b) => {
+      const da = (a.d || '').toString(), db = (b.d || '').toString();
+      if (da !== db) return da < db ? 1 : -1;
+      return (b.mtime || 0) - (a.mtime || 0);
     });
-    const payload=JSON.stringify({log:mergedLog,deleted:mergedDel});
-    await ghPut(payload);
+
+    // 逐筆上傳（簡單可靠，數量少時 OK）
+    for (const rec of mergedLog) {
+      const saved = await sbUpsert(rec);
+      if (saved?.id) rec._sb_id = saved.id;
+    }
+
     save(mergedLog);
-    localStorage.setItem(DEL_KEY,JSON.stringify(mergedDel));
     renderLog();
-    setStatus('✅ 同步成功（'+mergedLog.length+' 筆 · '+new Date().toLocaleString('zh-Hant')+'）',true);
-  }catch(e){setStatus('❌ '+e.message,false);}
+    setStatus('✅ 同步成功（' + mergedLog.length + ' 筆 · ' + new Date().toLocaleString('zh-Hant') + '）', true);
+  } catch (e) {
+    setStatus('❌ ' + e.message, false);
+  }
 }
-let _autoTimer=null;
-let _pollTimer=null;
-let _syncing=false;
-function maybeAutoSync(){if(localStorage.getItem(AUTO_KEY)!=='1')return;clearTimeout(_autoTimer);_autoTimer=setTimeout(doSyncSafe,1200);}
-async function doSyncSafe(){if(_syncing)return;_syncing=true;try{await doSync();}finally{_syncing=false;}}
-function startAutoSync(){if(_pollTimer)return;_pollTimer=setInterval(()=>{if(localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();},30000);}
-function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null;}}
+
+async function testConnection() {
+  setStatus('🔄 測試中…', null);
+  try {
+    await sbLoadAll();
+    setStatus('✅ 連線成功，裝置 ID：' + getDeviceId().slice(0, 12) + '…', true);
+  } catch (e) {
+    setStatus('❌ ' + e.message, false);
+  }
+}
+
+let _autoTimer = null;
+let _syncing = false;
+function maybeAutoSync() { if (localStorage.getItem(AUTO_KEY) !== '1') return; clearTimeout(_autoTimer); _autoTimer = setTimeout(doSyncSafe, 1200); }
+async function doSyncSafe() { if (_syncing) return; _syncing = true; try { await doSync(); } finally { _syncing = false; } }
+function startAutoSync() { /* 靜態頁無長連線，自動同步僅靠 visibilitychange + maybeAutoSync */ }
+function stopAutoSync() { }
 
 // 同步 UI 連動
-(function initSyncUI(){
-  const tokEl=document.getElementById('syncToken');
-  if(tokEl){tokEl.value=getToken();tokEl.oninput=()=>localStorage.setItem(TOKEN_KEY,tokEl.value.trim());}
-  const nowBtn=document.getElementById('syncNowBtn');if(nowBtn)nowBtn.onclick=doSync;
-  const testBtn=document.getElementById('syncTestBtn');
-  if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{const tok=getToken();const r=await fetch('https://api.github.com/user',{headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});if(!r.ok)throw new Error('Token 無效：'+r.status);setStatus('✅ Token 有效（'+(await r.json()).login+'）',true);}catch(e){setStatus('❌ '+e.message,false);}};
-  const autoBtn=document.getElementById('autoSyncBtn');
-  function refreshAuto(){if(!autoBtn)return;const on=localStorage.getItem(AUTO_KEY)==='1';autoBtn.textContent='自動同步：'+(on?'開':'關');autoBtn.classList.toggle('on',on);}
-  if(autoBtn)autoBtn.onclick=()=>{const on=localStorage.getItem(AUTO_KEY)==='1';localStorage.setItem(AUTO_KEY,on?'0':'1');refreshAuto();if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}else{stopAutoSync();}};
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&localStorage.getItem(AUTO_KEY)==='1')doSyncSafe();});
+(function initSyncUI() {
+  const nowBtn = document.getElementById('syncNowBtn'); if (nowBtn) nowBtn.onclick = doSync;
+  const testBtn = document.getElementById('syncTestBtn'); if (testBtn) testBtn.onclick = testConnection;
+  const autoBtn = document.getElementById('autoSyncBtn');
+  function refreshAuto() { if (!autoBtn) return; const on = localStorage.getItem(AUTO_KEY) === '1'; autoBtn.textContent = '自動同步：' + (on ? '開' : '關'); autoBtn.classList.toggle('on', on); }
+  if (autoBtn) autoBtn.onclick = () => { const on = localStorage.getItem(AUTO_KEY) === '1'; localStorage.setItem(AUTO_KEY, on ? '0' : '1'); refreshAuto(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && localStorage.getItem(AUTO_KEY) === '1') doSyncSafe(); });
   refreshAuto();
-  const last=JSON.parse(localStorage.getItem(STATUS_KEY)||'null');if(last&&last.txt)setStatus(last.txt,last.ok);
-  if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}
+  const last = JSON.parse(localStorage.getItem(STATUS_KEY) || 'null'); if (last && last.txt) setStatus(last.txt, last.ok);
+  if (localStorage.getItem(AUTO_KEY) === '1') doSyncSafe();
+  // 啟動時自動載入雲端資料（以資料庫為準）
+  doSyncSafe();
 })();
 renderLog();
 
