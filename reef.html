@@ -318,6 +318,7 @@
           <button class="btn ghost" id="dbgRefreshBtn" style="font-size:11px;padding:6px">🔄 重新整理除錯資訊</button>
           <button class="btn ghost" id="dbgForceSyncBtn" style="font-size:11px;padding:6px">⚡ 強制同步（忽略快取）</button>
           <button class="btn" id="dbgUploadLocalBtn" style="font-size:11px;padding:6px;background:var(--pink)">📤 本地優先上傳</button>
+          <button class="btn ghost" id="dbgTestDbBtn" style="font-size:11px;padding:6px">🔬 測試資料庫連線</button>
         </div>
         <div id="dbgLog" style="margin-top:8px;max-height:120px;overflow:auto;background:#050b14;padding:6px;border-radius:4px;"></div>
       </div>
@@ -917,8 +918,14 @@ async function sbUpsert(record) {
     return data[0];
   } else {
     // 新增：不帶 id，讓資料庫生成 uuid
-    const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(payload) });
-    return data[0];
+    try {
+      const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(payload) });
+      dbgLog('POST 成功：' + JSON.stringify(data));
+      return data[0];
+    } catch (e) {
+      dbgLog('POST 失敗：' + e.message);
+      throw e;
+    }
   }
 }
 
@@ -1055,7 +1062,6 @@ async function refreshDebugPanel() {
 document.getElementById('dbgRefreshBtn').onclick = refreshDebugPanel;
 document.getElementById('dbgForceSyncBtn').onclick = async () => {
   dbgLog('強制同步開始…');
-  // 清除可能的快取標記
   try {
     await doSync();
     dbgLog('強制同步完成');
@@ -1073,8 +1079,12 @@ document.getElementById('dbgUploadLocalBtn').onclick = async () => {
     let uploaded = 0;
     for (const rec of localLog) {
       if (rec && rec.id) {
-        await sbUpsert(rec);
-        uploaded++;
+        try {
+          await sbUpsert(rec);
+          uploaded++;
+        } catch (e) {
+          dbgLog('上傳失敗 ' + rec.id + '：' + e.message);
+        }
       }
     }
     dbgLog('本地優先上傳完成：' + uploaded + ' 筆');
@@ -1082,6 +1092,34 @@ document.getElementById('dbgUploadLocalBtn').onclick = async () => {
   } catch (e) {
     dbgLog('本地上傳失敗：' + e.message);
   }
+};
+
+// 測試資料庫直接連線
+document.getElementById('dbgTestDbBtn').onclick = async () => {
+  dbgLog('🔬 測試資料庫連線…');
+  try {
+    // 1. 測試 SELECT
+    const testData = await sbRequest('/reef_log?device_id=eq.' + getDeviceId() + '&limit=1');
+    dbgLog('SELECT 測試：' + testData.length + ' 筆');
+    
+    // 2. 測試 INSERT
+    const testRecord = {
+      device_id: getDeviceId(),
+      data: { d: 'TEST', test: true, id: 'test_' + Date.now() },
+      updated_at: new Date().toISOString()
+    };
+    const insertResult = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(testRecord) });
+    dbgLog('INSERT 測試成功：' + JSON.stringify(insertResult));
+    
+    // 3. 清理測試資料
+    if (insertResult && insertResult[0]?.id) {
+      await sbRequest('/reef_log?id=eq.' + insertResult[0].id, { method: 'DELETE' });
+      dbgLog('測試資料已清理');
+    }
+  } catch (e) {
+    dbgLog('資料庫測試失敗：' + e.message);
+  }
+  refreshDebugPanel();
 };
 
 // 初始化除錯面板
