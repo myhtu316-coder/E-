@@ -306,6 +306,20 @@
 
       <button class="btn ghost" id="autoSyncBtn" style="margin-top:14px">自動同步：關</button>
       <div class="hint">開啟後，每次新增／刪除／匯入紀錄都會自動同步到 Supabase 雲端，換手機也不怕不見。</div>
+
+      <!-- 除錯面板 -->
+      <div style="margin-top:14px;padding:10px;background:#0a111f;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:monospace;">
+        <b>🔧 同步除錯</b><br>
+        <span id="dbgDeviceId">裝置 ID：載入中…</span><br>
+        <span id="dbgLocalCount">本地筆數：—</span><br>
+        <span id="dbgCloudCount">雲端筆數：—</span><br>
+        <span id="dbgLastSync">最後同步：—</span><br>
+        <div class="row" style="margin-top:8px">
+          <button class="btn ghost" id="dbgRefreshBtn" style="font-size:11px;padding:6px">🔄 重新整理除錯資訊</button>
+          <button class="btn ghost" id="dbgForceSyncBtn" style="font-size:11px;padding:6px">⚡ 強制同步（忽略快取）</button>
+        </div>
+        <div id="dbgLog" style="margin-top:8px;max-height:120px;overflow:auto;background:#050b14;padding:6px;border-radius:4px;"></div>
+      </div>
     </div>
   </section>
 
@@ -971,6 +985,54 @@ function stopAutoSync() { }
   // 啟動時自動載入雲端資料（以資料庫為準）
   doSyncSafe();
 })();
+
+// 除錯面板功能
+function dbgLog(msg) {
+  const el = document.getElementById('dbgLog');
+  if (el) {
+    const time = new Date().toLocaleTimeString();
+    el.innerHTML += `<div>[${time}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+async function refreshDebugPanel() {
+  const deviceId = getDeviceId();
+  document.getElementById('dbgDeviceId').textContent = '裝置 ID：' + deviceId;
+  
+  const localLog = load();
+  document.getElementById('dbgLocalCount').textContent = '本地筆數：' + localLog.length;
+  
+  try {
+    const cloudLog = await sbLoadAll();
+    document.getElementById('dbgCloudCount').textContent = '雲端筆數：' + cloudLog.length;
+    dbgLog('查詢雲端成功：' + cloudLog.length + ' 筆');
+  } catch (e) {
+    document.getElementById('dbgCloudCount').textContent = '雲端筆數：查詢失敗';
+    dbgLog('查詢雲端失敗：' + e.message);
+  }
+  
+  const last = JSON.parse(localStorage.getItem(STATUS_KEY) || 'null');
+  if (last && last.txt) {
+    document.getElementById('dbgLastSync').textContent = '最後同步：' + last.txt;
+  }
+}
+
+document.getElementById('dbgRefreshBtn').onclick = refreshDebugPanel;
+document.getElementById('dbgForceSyncBtn').onclick = async () => {
+  dbgLog('強制同步開始…');
+  // 清除可能的快取標記
+  try {
+    await doSync();
+    dbgLog('強制同步完成');
+  } catch (e) {
+    dbgLog('強制同步失敗：' + e.message);
+  }
+  refreshDebugPanel();
+};
+
+// 初始化除錯面板
+refreshDebugPanel();
 renderLog();
 
 // PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
