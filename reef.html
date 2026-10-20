@@ -880,7 +880,7 @@ function stopAutoSync(){if(_pollTimer){clearInterval(_pollTimer);_pollTimer=null
   if(tokEl){tokEl.value=getToken();tokEl.oninput=()=>localStorage.setItem(TOKEN_KEY,tokEl.value.trim());}
   const nowBtn=document.getElementById('syncNowBtn');if(nowBtn)nowBtn.onclick=doSync;
   const testBtn=document.getElementById('syncTestBtn');
-  if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{await ghGet();setStatus('✅ 連線成功，倉庫可讀',true);}catch(e){setStatus('❌ '+e.message,false);}};
+  if(testBtn)testBtn.onclick=async()=>{if(!getToken()){setStatus('⚠️ 先貼上 PAT',false);return;}setStatus('🔄 測試中…',null);try{const tok=getToken();const r=await fetch('https://api.github.com/user',{headers:{'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json','User-Agent':'reef-tool'}});if(!r.ok)throw new Error('Token 無效：'+r.status);setStatus('✅ Token 有效（'+(await r.json()).login+'）',true);}catch(e){setStatus('❌ '+e.message,false);}};
   const autoBtn=document.getElementById('autoSyncBtn');
   function refreshAuto(){if(!autoBtn)return;const on=localStorage.getItem(AUTO_KEY)==='1';autoBtn.textContent='自動同步：'+(on?'開':'關');autoBtn.classList.toggle('on',on);}
   if(autoBtn)autoBtn.onclick=()=>{const on=localStorage.getItem(AUTO_KEY)==='1';localStorage.setItem(AUTO_KEY,on?'0':'1');refreshAuto();if(localStorage.getItem(AUTO_KEY)==='1'){doSyncSafe();startAutoSync();}else{stopAutoSync();}};
