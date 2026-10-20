@@ -950,7 +950,7 @@ async function testConnection() {
 
 let _autoTimer = null;
 let _syncing = false;
-function maybeAutoSync() { if (localStorage.getItem(AUTO_KEY) !== '1') return; clearTimeout(_autoTimer); _autoTimer = setTimeout(doSyncSafe, 1200); }
+function maybeAutoSync() { if (localStorage.getItem(AUTO_KEY) !== '1') return; clearTimeout(_autoTimer); _autoTimer = setTimeout(doSyncSafe, 500); }
 async function doSyncSafe() { if (_syncing) return; _syncing = true; try { await doSync(); } finally { _syncing = false; } }
 function startAutoSync() { /* 靜態頁無長連線，自動同步僅靠 visibilitychange + maybeAutoSync */ }
 function stopAutoSync() { }
