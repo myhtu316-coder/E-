@@ -317,6 +317,7 @@
         <div class="row" style="margin-top:8px">
           <button class="btn ghost" id="dbgRefreshBtn" style="font-size:11px;padding:6px">🔄 重新整理除錯資訊</button>
           <button class="btn ghost" id="dbgForceSyncBtn" style="font-size:11px;padding:6px">⚡ 強制同步（忽略快取）</button>
+          <button class="btn" id="dbgUploadLocalBtn" style="font-size:11px;padding:6px;background:var(--pink)">📤 本地優先上傳</button>
         </div>
         <div id="dbgLog" style="margin-top:8px;max-height:120px;overflow:auto;background:#050b14;padding:6px;border-radius:4px;"></div>
       </div>
@@ -1029,6 +1030,25 @@ document.getElementById('dbgForceSyncBtn').onclick = async () => {
     dbgLog('強制同步失敗：' + e.message);
   }
   refreshDebugPanel();
+};
+
+document.getElementById('dbgUploadLocalBtn').onclick = async () => {
+  dbgLog('📤 本地優先上傳開始…');
+  try {
+    const localLog = load();
+    if (!localLog.length) { dbgLog('本地無資料'); return; }
+    let uploaded = 0;
+    for (const rec of localLog) {
+      if (rec && rec.id) {
+        await sbUpsert(rec);
+        uploaded++;
+      }
+    }
+    dbgLog('本地優先上傳完成：' + uploaded + ' 筆');
+    refreshDebugPanel();
+  } catch (e) {
+    dbgLog('本地上傳失敗：' + e.message);
+  }
 };
 
 // 初始化除錯面板
