@@ -247,6 +247,7 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
 <script>
 const SYNC_URL = 'https://kz-sync-api.vercel.app/api/kz-sync';
 const LOCAL_KEY = 'kz_log_v1';
+let editId = null;  // 改用 ID 識別編輯中的記錄（而非陣列索引）
 
 function showSyncStatus(msg, type) {
   const el = document.getElementById('syncStatus');
@@ -442,9 +443,26 @@ async function kzSave() {
     }
 
     const a = kzLoad();
-    rec.id = kzNewId();
-    rec.t = Date.now();
-    a.unshift(rec);
+    if (editId) {
+      const idx = a.findIndex(function(r) { return r.id === editId; });
+      if (idx !== -1) {
+        rec.id = a[idx].id;
+        rec.t = a[idx].t || Date.now();
+        a[idx] = rec;
+        editId = null;
+        const btn = document.querySelector('button.btn[onclick="kzSave()"]');
+        if (btn) btn.textContent = '存一筆 KZ 記錄';
+      } else {
+        // 找不到 ID，當作新增處理
+        rec.id = kzNewId();
+        rec.t = Date.now();
+        a.unshift(rec);
+      }
+    } else {
+      rec.id = kzNewId();
+      rec.t = Date.now();
+      a.unshift(rec);
+    }
     kzSaveData(a);
 
     const saved = await kzSaveToBackend(rec);
@@ -466,10 +484,12 @@ async function kzSave() {
 }
 
 
-function kzEdit(i) {
+function kzEdit(id) {
   const a = kzLoad();
-  if (i < 0 || i >= a.length) return;
-  const r = a[i];
+  const idx = a.findIndex(function(r) { return r.id === id; });
+  if (idx === -1) return;
+  const r = a[idx];
+  editId = r.id;  // 存 ID 而非索引
   document.getElementById('kzYear').value = r.d ? r.d.split('-')[0] : '';
   document.getElementById('kzMonth').value = r.d ? r.d.split('-')[1] : '';
   document.getElementById('kzDay').value = r.d ? r.d.split('-')[2] || '' : '';
@@ -477,10 +497,10 @@ function kzEdit(i) {
   document.getElementById('kzSp').value = r.sp || '';
   document.getElementById('kzS3').value = r.s3 || '';
   document.getElementById('kzNote').value = r.note || '';
-  a.splice(i, 1);
-  kzSaveData(a);
-  renderKzLog(a);
-  alert('已載入編輯，修改後按「存一筆」即可更新');
+  const btn = document.querySelector('button.btn[onclick="kzSave()"]');
+  if (btn) btn.textContent = '更新這筆';
+  document.getElementById('kzNote').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  alert('已載入編輯，修改後按「更新這筆」即可覆蓋原筆（不新增）');
 }
 
 async function kzDeleteItem(id) {
