@@ -851,14 +851,13 @@ async function sbUpsert(record) {
     data: record,
     updated_at: new Date().toISOString()
   };
-  // 如果有 id 且不是新生成的，用 upsert (on conflict id)
-  if (record.id && !record.id.startsWith('new_')) {
-    const data = await sbRequest('/reef_log?id=eq.' + record.id, { method: 'PATCH', body: JSON.stringify(payload) });
+  // 如果有 _sb_id（Supabase UUID），用它做更新
+  if (record._sb_id) {
+    const data = await sbRequest('/reef_log?id=eq.' + record._sb_id, { method: 'PATCH', body: JSON.stringify(payload) });
     return data[0];
   } else {
     // 新增：不帶 id，讓資料庫生成 uuid
-    const { id, ...rest } = payload;
-    const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(rest) });
+    const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(payload) });
     return data[0];
   }
 }
@@ -875,6 +874,7 @@ async function doSync() {
     const cloudLog = await sbLoadAll();
     
     // 以雲端為準，合併本地新增/編輯
+    // 雲端用 _sb_id (Supabase UUID) 做 key，本地用 id 做 key
     const map = {};
     cloudLog.forEach(r => { if (r && r.data && r.data.id) map[r.data.id] = { ...r.data, _sb_id: r.id }; });
     localLog.forEach(r => { if (r && r.id && !r.id.startsWith('new_')) { const ex = map[r.id]; if (!ex || (r.mtime || 0) >= (ex.mtime || 0)) map[r.id] = { ...r, _sb_id: ex?._sb_id }; } });
@@ -891,7 +891,13 @@ async function doSync() {
       if (saved?.id) rec._sb_id = saved.id;
     }
 
-    save(mergedLog);
+    // 同步完成後，將 _sb_id 寫回 localStorage
+    const finalLog = mergedLog.map(r => {
+      const out = { ...r };
+      delete out._sb_id; // 不存 _sb_id 到本地，只在記憶體用
+      return out;
+    });
+    save(finalLog);
     renderLog();
     setStatus('✅ 同步成功（' + mergedLog.length + ' 筆 · ' + new Date().toLocaleString('zh-Hant') + '）', true);
   } catch (e) {
