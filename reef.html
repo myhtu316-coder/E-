@@ -763,11 +763,17 @@ document.getElementById('expBtn').onclick=()=>{
   const u=URL.createObjectURL(blob);const a2=document.createElement('a');
   a2.href=u;a2.download='reef_log.csv';a2.click();URL.revokeObjectURL(u);
 };
-document.getElementById('clrBtn').onclick=()=>{
-  if(confirm('確定清空全部紀錄？（會同步標記刪除，雲端也會一併清掉）')){
-    load().forEach(r=>{if(r&&r.id)addDeleted(r.id)});
-    localStorage.removeItem(KEY);renderLog();
-    if(getToken())doSync();
+document.getElementById('clrBtn').onclick=async()=>{
+  if(confirm('確定清空全部紀錄？（雲端也會一併清掉）')){
+    const all = load();
+    for (const r of all) {
+      if (r && r._sb_id) {
+        try { await sbDelete(r._sb_id); } catch(e) { console.warn('清空刪除雲端失敗', e); }
+      }
+    }
+    localStorage.removeItem(KEY);
+    renderLog();
+    doSyncSafe();
   }
 };
 
