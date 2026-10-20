@@ -859,7 +859,7 @@ async function doSync(){
       return (b.mtime||0)-(a.mtime||0);
     });
     const payload=JSON.stringify({log:mergedLog,deleted:mergedDel});
-    await ghPut(payload,cloud?cloud.sha:undefined);
+    await ghPut(payload);
     save(mergedLog);
     localStorage.setItem(DEL_KEY,JSON.stringify(mergedDel));
     renderLog();
