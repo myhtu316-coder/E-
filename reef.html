@@ -878,8 +878,8 @@ function parseCSV(text){
 const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
 
-// 初始化 Supabase Client（支援 Auth）
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+// 直接使用 CDN 載入的全域 supabase 建立 Client
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -892,13 +892,13 @@ const STATUS_KEY = 'reef_sync_status';
 
 // 取得當前用戶
 async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
   return user;
 }
 
 // 取得當前 session（含 access_token）
 async function getSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   return session;
 }
 
@@ -1181,7 +1181,7 @@ async function checkAuthState() {
     const btnSignOut = document.getElementById('btnSignOut');
     if (btnSignOut) {
       btnSignOut.onclick = async () => {
-        await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
         location.reload();
       };
     }
@@ -1201,7 +1201,7 @@ async function checkAuthState() {
       btnMagicLink.onclick = async () => {
         const email = authEmail?.value?.trim();
         if (!email) { alert('請輸入 Email'); return; }
-        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
         if (error) { alert('發送失敗：' + error.message); }
         else { alert('魔法連結已發送至 ' + email + '，請檢查郵件'); }
       };
@@ -1210,7 +1210,7 @@ async function checkAuthState() {
       btnSignUp.onclick = async () => {
         const email = authEmail?.value?.trim();
         if (!email) { alert('請輸入 Email'); return; }
-        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
         if (error) { alert('發送失敗：' + error.message); }
         else { alert('驗證郵件已發送至 ' + email + '，請檢查郵件完成註冊'); }
       };
@@ -1219,7 +1219,7 @@ async function checkAuthState() {
 }
 
 // 監聽 Auth 狀態變化
-supabase.auth.onAuthStateChange((event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
   checkAuthState();
 });
