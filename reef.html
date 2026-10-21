@@ -874,33 +874,15 @@ function parseCSV(text){
   return lines;
 }
 
-/* ===== 雲端同步（Supabase Auth + RLS）===== */
+/* ===== 雲端同步（共用 device_id，無需登入）===== */
 const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
 
-// 直接使用 CDN 載入的全域 supabase 建立 Client
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
-});
+// 固定共用 device_id，所有裝置共用同一組資料
+const SHARED_DEVICE_ID = 'shared_reef_2024';
 
 const AUTO_KEY = 'reef_sync_auto';
 const STATUS_KEY = 'reef_sync_status';
-
-// 取得當前用戶
-async function getCurrentUser() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  return user;
-}
-
-// 取得當前 session（含 access_token）
-async function getSession() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  return session;
-}
 
 function setStatus(txt, ok) {
   const el = document.getElementById('syncStatus');
@@ -908,15 +890,12 @@ function setStatus(txt, ok) {
   localStorage.setItem(STATUS_KEY, JSON.stringify({txt, ok}));
 }
 
-// 使用用戶的 access_token 發請求（RLS 會自動過濾 user_id）
+// 直接使用 anon key 發請求，以 device_id 過濾
 async function sbRequest(path, options = {}) {
-  const session = await getSession();
-  if (!session) throw new Error('未登入，請先登入');
-  
   const url = SUPABASE_URL + '/rest/v1' + path;
   const headers = {
     'apikey': SUPABASE_ANON_KEY,
-    'Authorization': 'Bearer ' + session.access_token,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation',
     ...(options.headers || {})
@@ -929,15 +908,16 @@ async function sbRequest(path, options = {}) {
   return r.json();
 }
 
-// 載入當前用戶的所有記錄
+// 載入共用 device_id 的所有記錄
 async function sbLoadAll() {
-  const data = await sbRequest('/reef_log?order=created_at.desc&limit=2000');
+  const data = await sbRequest('/reef_log?device_id=eq.' + SHARED_DEVICE_ID + '&order=created_at.desc&limit=2000');
   return data || [];
 }
 
-// 新增/更新記錄（不需指定 user_id，RLS 會自動帶入 auth.uid()）
+// 新增/更新記錄（自動帶入共用 device_id）
 async function sbUpsert(record) {
   const payload = {
+    device_id: SHARED_DEVICE_ID,
     data: record,
     updated_at: new Date().toISOString()
   };
@@ -960,7 +940,7 @@ async function sbUpsert(record) {
 
 // 刪除記錄
 async function sbDelete(id) {
-  await sbRequest('/reef_log?id=eq.' + id, { method: 'DELETE' });
+  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + SHARED_DEVICE_ID, { method: 'DELETE' });
 }
 
 async function doSync() {
@@ -1027,8 +1007,7 @@ async function testConnection() {
   setStatus('🔄 測試中…', null);
   try {
     await sbLoadAll();
-    const user = await getCurrentUser();
-    setStatus('✅ 連線成功，用戶：' + (user?.email || user?.id?.slice(0, 12) + '…'), true);
+    setStatus('✅ 連線成功，共用裝置：' + SHARED_DEVICE_ID.slice(0, 12) + '…', true);
   } catch (e) {
     setStatus('❌ ' + e.message, false);
   }
@@ -1145,97 +1124,17 @@ document.getElementById('dbgTestDbBtn').onclick = async () => {
   } catch (e) {
     dbgLog('資料庫測試失敗：' + e.message);
   }
+  // 初始化除錯面板
   refreshDebugPanel();
-};
+  renderLog();
 
-// 初始化除錯面板
-// PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
-  });
-}
-
-// ===== Auth 事件處理 =====
-
-// 檢查登入狀態並更新 UI
-async function checkAuthState() {
-  const user = await getCurrentUser();
-  const loginForm = document.getElementById('loginForm');
-  const userInfo = document.getElementById('userInfo');
-  const authLoading = document.getElementById('authLoading');
-  const userEmail = document.getElementById('userEmail');
-  const btnSignOut = document.getElementById('btnSignOut');
-  const btnMagicLink = document.getElementById('btnMagicLink');
-  const btnSignUp = document.getElementById('btnSignUp');
-  const authEmail = document.getElementById('authEmail');
-
-  if (authLoading) authLoading.style.display = 'none';
-
-  if (user) {
-    // 已登入
-    if (loginForm) loginForm.style.display = 'none';
-    if (userInfo) userInfo.style.display = 'flex';
-    if (userEmail) userEmail.textContent = user.email || user.id?.slice(0, 12) + '…';
-    // 綁定登出
-    const btnSignOut = document.getElementById('btnSignOut');
-    if (btnSignOut) {
-      btnSignOut.onclick = async () => {
-        const { error } = await supabaseClient.auth.signOut();
-        location.reload();
-      };
-    }
-    // 登入後自動同步
-    doSyncSafe();
-    // 更新除錯面板
-    refreshDebugPanel();
-  } else {
-    // 未登入
-    if (loginForm) loginForm.style.display = 'block';
-    if (userInfo) userInfo.style.display = 'none';
-    // 綁定登入按鈕
-    const btnMagicLink = document.getElementById('btnMagicLink');
-    const btnSignUp = document.getElementById('btnSignUp');
-    const authEmail = document.getElementById('authEmail');
-    if (btnMagicLink) {
-      btnMagicLink.onclick = async () => {
-        const email = authEmail?.value?.trim();
-        if (!email) { alert('請輸入 Email'); return; }
-        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-        if (error) { alert('發送失敗：' + error.message); }
-        else { alert('魔法連結已發送至 ' + email + '，請檢查郵件'); }
-      };
-    }
-    if (btnSignUp) {
-      btnSignUp.onclick = async () => {
-        const email = authEmail?.value?.trim();
-        if (!email) { alert('請輸入 Email'); return; }
-        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-        if (error) { alert('發送失敗：' + error.message); }
-        else { alert('驗證郵件已發送至 ' + email + '，請檢查郵件完成註冊'); }
-      };
-    }
+  // PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
+    });
   }
-}
-
-// 監聽 Auth 狀態變化
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state changed:', event, session?.user?.email);
-  checkAuthState();
-});
-
-// 初始化檢查
-checkAuthState();
-
-renderLog();
-
-// PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
-  });
-}
-</script>
-</body>
-</html>
+  </script>
+  </body>
+  </html>
  
