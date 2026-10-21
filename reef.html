@@ -948,8 +948,9 @@ async function doSync() {
     localLog.forEach(r => { 
       if (r && r.id && !r.id.startsWith('new_')) { 
         const ex = map[r.id]; 
-        // 本地有但雲端無，且有 _sb_id → 視為已被其他裝置刪除，不加入 map
-        if (!ex && r._sb_id && !cloudIds.has(r.id)) {
+        // 只有當雲端非空且本地有雲端無、且有 _sb_id 時，才判定為已刪除
+        // 若雲端為空，不應判定為刪除，應保留本地資料上傳
+        if (!ex && r._sb_id && !cloudIds.has(r.id) && cloudIds.size > 0) {
           console.log('本地資料雲端無且有 _sb_id，判定為已刪除:', r.id);
           return; 
         }
