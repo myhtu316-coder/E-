@@ -1044,8 +1044,7 @@ function dbgLog(msg) {
 }
 
 async function refreshDebugPanel() {
-  const user = await getCurrentUser();
-  document.getElementById('dbgDeviceId').textContent = '用戶：' + (user?.email || user?.id?.slice(0, 12) + '…') || '未登入';
+  document.getElementById('dbgDeviceId').textContent = '裝置 ID：' + SHARED_DEVICE_ID.slice(0, 12) + '…';
   
   const localLog = load();
   document.getElementById('dbgLocalCount').textContent = '本地筆數：' + localLog.length;
