@@ -288,7 +288,13 @@
 
     <div class="card">
       <h2>☁️ 同步設定</h2>
-      <div class="hint">☁️ 使用 Supabase 雲端資料庫同步。所有裝置自動共用同一組資料，無需手動同步。</div>
+      <div class="hint">☁️ 使用 Supabase 雲端資料庫同步，無需輸入 Token。裝置 ID 自動生成並儲存在本機。</div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" id="copyDeviceIdBtn">📋 複製裝置 ID</button>
+        <button class="btn ghost" id="pasteDeviceIdBtn">📥 貼上裝置 ID</button>
+      </div>
+      <div class="hint" style="font-size:11px">多裝置同步：在主裝置按「複製」，在另一台裝置按「貼上」即可共用資料。</div>
 
       <label style="margin-top:14px">同步狀態</label>
       <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
@@ -856,15 +862,19 @@ function parseCSV(text){
 
 /* ===== 雲端同步（Supabase 直接存取，無需 PAT）===== */
 const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
-/* ===== 雲端同步（固定共用 device_id，所有裝置自動同步）===== */
-const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
-
-// 固定共用 device_id，所有裝置共用同一組資料
-const SHARED_DEVICE_ID = 'dev_mvgbcnkcow382qr';
-
+const DEVICE_ID_KEY = 'reef_device_id';
 const AUTO_KEY = 'reef_sync_auto';
 const STATUS_KEY = 'reef_sync_status';
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
 
 function setStatus(txt, ok) {
   const el = document.getElementById('syncStatus');
@@ -889,16 +899,16 @@ async function sbRequest(path, options = {}) {
   return r.json();
 }
 
-// 載入共用 device_id 的所有記錄
 async function sbLoadAll() {
-  const data = await sbRequest('/reef_log?device_id=eq.' + SHARED_DEVICE_ID + '&order=created_at.desc&limit=2000');
+  const deviceId = getDeviceId();
+  const data = await sbRequest('/reef_log?device_id=eq.' + deviceId + '&order=created_at.desc&limit=2000');
   return data || [];
 }
 
-// 新增/更新記錄（自動帶入共用 device_id）
 async function sbUpsert(record) {
+  const deviceId = getDeviceId();
   const payload = {
-    device_id: SHARED_DEVICE_ID,
+    device_id: deviceId,
     data: record,
     updated_at: new Date().toISOString()
   };
@@ -919,24 +929,9 @@ async function sbUpsert(record) {
   }
 }
 
-// 刪除記錄
 async function sbDelete(id) {
-  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + SHARED_DEVICE_ID, { method: 'DELETE' });
-}
-    // 新增：不帶 id，讓資料庫生成 uuid
-    try {
-      const data = await sbRequest('/reef_log', { method: 'POST', body: JSON.stringify(payload) });
-      dbgLog('POST 成功：' + JSON.stringify(data));
-      return data[0];
-    } catch (e) {
-      dbgLog('POST 失敗：' + e.message);
-      throw e;
-    }
-  }
-}
-
-async function sbDelete(id) {
-  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + SHARED_DEVICE_ID, { method: 'DELETE' });
+  const deviceId = getDeviceId();
+  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + deviceId, { method: 'DELETE' });
 }
 
 async function doSync() {
@@ -1003,7 +998,7 @@ async function testConnection() {
   setStatus('🔄 測試中…', null);
   try {
     await sbLoadAll();
-    setStatus('✅ 連線成功，共用裝置：' + SHARED_DEVICE_ID.slice(0, 12) + '…', true);
+    setStatus('✅ 連線成功，裝置 ID：' + getDeviceId().slice(0, 12) + '…', true);
   } catch (e) {
     setStatus('❌ ' + e.message, false);
   }
@@ -1020,6 +1015,8 @@ function stopAutoSync() { }
 (function initSyncUI() {
   const nowBtn = document.getElementById('syncNowBtn'); if (nowBtn) nowBtn.onclick = doSync;
   const testBtn = document.getElementById('syncTestBtn'); if (testBtn) testBtn.onclick = testConnection;
+  const copyBtn = document.getElementById('copyDeviceIdBtn'); if (copyBtn) copyBtn.onclick = () => { navigator.clipboard.writeText(getDeviceId()).then(() => setStatus('✅ 裝置 ID 已複製：' + getDeviceId(), true)); };
+  const pasteBtn = document.getElementById('pasteDeviceIdBtn'); if (pasteBtn) pasteBtn.onclick = async () => { const txt = await navigator.clipboard.readText(); if (txt && txt.startsWith('dev_')) { localStorage.setItem(DEVICE_ID_KEY, txt.trim()); setStatus('✅ 已套用新裝置 ID：' + txt.trim(), true); doSyncSafe(); } else { setStatus('❌ 剪貼簿無有效裝置 ID', false); } };
   const autoBtn = document.getElementById('autoSyncBtn');
   function refreshAuto() { if (!autoBtn) return; const on = localStorage.getItem(AUTO_KEY) === '1'; autoBtn.textContent = '自動同步：' + (on ? '開' : '關'); autoBtn.classList.toggle('on', on); }
   if (autoBtn) autoBtn.onclick = () => { const on = localStorage.getItem(AUTO_KEY) === '1'; localStorage.setItem(AUTO_KEY, on ? '0' : '1'); refreshAuto(); };
@@ -1027,6 +1024,8 @@ function stopAutoSync() { }
   refreshAuto();
   const last = JSON.parse(localStorage.getItem(STATUS_KEY) || 'null'); if (last && last.txt) setStatus(last.txt, last.ok);
   if (localStorage.getItem(AUTO_KEY) === '1') doSyncSafe();
+  // 啟動時自動載入雲端資料（以資料庫為準）
+  doSyncSafe();
 })();
 
 // 除錯面板功能
@@ -1040,7 +1039,8 @@ function dbgLog(msg) {
 }
 
 async function refreshDebugPanel() {
-  document.getElementById('dbgDeviceId').textContent = '裝置 ID：' + SHARED_DEVICE_ID.slice(0, 12) + '…';
+  const deviceId = getDeviceId();
+  document.getElementById('dbgDeviceId').textContent = '裝置 ID：' + deviceId;
   
   const localLog = load();
   document.getElementById('dbgLocalCount').textContent = '本地筆數：' + localLog.length;
@@ -1100,12 +1100,12 @@ document.getElementById('dbgTestDbBtn').onclick = async () => {
   dbgLog('🔬 測試資料庫連線…');
   try {
     // 1. 測試 SELECT
-    const testData = await sbRequest('/reef_log?device_id=eq.' + SHARED_DEVICE_ID + '&limit=1');
+    const testData = await sbRequest('/reef_log?device_id=eq.' + getDeviceId() + '&limit=1');
     dbgLog('SELECT 測試：' + testData.length + ' 筆');
     
     // 2. 測試 INSERT
     const testRecord = {
-      device_id: SHARED_DEVICE_ID,
+      device_id: getDeviceId(),
       data: { d: 'TEST', test: true, id: 'test_' + Date.now() },
       updated_at: new Date().toISOString()
     };
