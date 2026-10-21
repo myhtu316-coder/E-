@@ -240,6 +240,7 @@ input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,24
     <h2>📜 記錄列表</h2>
     <button class="btn ghost" onclick="kzClear()">清空全部</button>
     <button class="btn ghost" onclick="kzSync()" style="margin-left:8px;">🔄 同步</button>
+    <button class="btn ghost" onclick="kzDebug()" style="margin-left:8px;background:var(--pink);">🔍 除錯同步</button>
     <div id="kzLog"></div>
     <div id="syncStatus" class="sync-status">⏳ 載入中...</div>
   </div>
@@ -613,6 +614,54 @@ function kzClear() {
     d.value = day < 10 ? '0' + day : day.toString();
   }
 })();
+
+async function kzDebug() {
+  showSyncStatus('🔍 除錯中...', '');
+  try {
+    // 1. 檢查後端直接回傳
+    const res = await fetch(SYNC_URL, { method: 'GET' });
+    const backendRaw = await res.json();
+    
+    // 2. 檢查 localStorage 目前內容
+    const localRaw = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+    
+    // 3. 呼叫既有的 kzLoadFromBackend
+    const backendViaFn = await kzLoadFromBackend();
+    
+    // 4. 顯示詳細資訊
+    const msg = [
+      '=== 除錯資訊 ===',
+      '後端直連狀態: ' + res.status + ' ' + (res.ok ? '✅' : '❌'),
+      '後端回傳筆數: ' + (backendRaw.data?.length || 0),
+      'localStorage 筆數: ' + localRaw.length,
+      'kzLoadFromBackend() 回傳: ' + backendViaFn.length,
+      'localStorage key: ' + LOCAL_KEY,
+      'SYNC_URL: ' + SYNC_URL,
+      '---',
+      '後端前 2 筆: ' + JSON.stringify(backendRaw.data?.slice(0, 2) || []),
+      'localStorage 前 2 筆: ' + JSON.stringify(localRaw.slice(0, 2))
+    ].join('\n');
+    
+    alert(msg);
+    console.log('kzDebug:', { backendRaw, localRaw, backendViaFn });
+    
+    // 如果後端有資料但本地沒有，強制同步
+    if (backendViaFn.length > 0 && localRaw.length === 0) {
+      showSyncStatus('⚠️ 後端有資料但本地為空，強制同步中...', '');
+      kzSaveData(backendViaFn);
+      renderKzLog(backendViaFn);
+      showSyncStatus('✅ 強制同步完成: ' + backendViaFn.length + ' 筆', 'ok');
+    } else if (backendViaFn.length === 0) {
+      showSyncStatus('❌ 後端無資料或載入失敗', 'err');
+    } else {
+      showSyncStatus('✅ 本地已有資料: ' + localRaw.length + ' 筆', 'ok');
+    }
+  } catch (e) {
+    showSyncStatus('❌ 除錯失敗: ' + e.message, 'err');
+    console.error('kzDebug error:', e);
+    alert('除錯失敗: ' + e.message);
+  }
+}
 
 (async function initApp() {
   try {
