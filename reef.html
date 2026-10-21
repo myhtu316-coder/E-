@@ -288,13 +288,25 @@
 
     <div class="card">
       <h2>☁️ 同步設定</h2>
-      <div class="hint">☁️ 使用 Supabase 雲端資料庫同步，無需輸入 Token。裝置 ID 自動生成並儲存在本機。</div>
+      <div class="hint">☁️ 使用 Supabase 雲端資料庫同步。登入後自動同步你的資料，換手機也不怕不見。</div>
 
-      <div class="row" style="margin-top:10px">
-        <button class="btn ghost" id="copyDeviceIdBtn">📋 複製裝置 ID</button>
-        <button class="btn ghost" id="pasteDeviceIdBtn">📥 貼上裝置 ID</button>
+      <!-- 登入/登出區塊 -->
+      <div id="authSection" style="margin-top:10px;padding:12px;background:#0a111f;border:1px solid var(--line);border-radius:8px;">
+        <div id="loginForm" style="display:none;">
+          <label>Email</label>
+          <input id="authEmail" type="email" placeholder="輸入 Email" style="width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid var(--line);background:#08111f;color:var(--txt);">
+          <div class="row" style="gap:8px;margin-top:8px;">
+            <button class="btn" id="btnMagicLink">📧 發送魔法連結登入</button>
+            <button class="btn ghost" id="btnSignUp">註冊新帳號</button>
+          </div>
+          <div class="hint" style="font-size:11px;margin-top:6px;">點擊郵件中的連結即可完成登入，無需密碼。</div>
+        </div>
+        <div id="userInfo" style="display:none;align-items:center;gap:10px;">
+          <span id="userEmail" style="color:var(--green);font-weight:600;"></span>
+          <button class="btn ghost" id="btnSignOut" style="padding:6px 12px;font-size:12px;">登出</button>
+        </div>
+        <div id="authLoading" style="text-align:center;color:var(--dim);">檢查登入狀態…</div>
       </div>
-      <div class="hint" style="font-size:11px">多裝置同步：在主裝置按「複製」，在另一台裝置按「貼上」即可共用資料。</div>
 
       <label style="margin-top:14px">同步狀態</label>
       <div class="out" id="syncStatus" style="font-size:13px">尚未同步</div>
@@ -310,7 +322,7 @@
       <!-- 除錯面板 -->
       <div style="margin-top:14px;padding:10px;background:#0a111f;border:1px solid var(--line);border-radius:8px;font-size:11px;font-family:monospace;">
         <b>🔧 同步除錯</b><br>
-        <span id="dbgDeviceId">裝置 ID：載入中…</span><br>
+        <span id="dbgDeviceId">用戶：載入中…</span><br>
         <span id="dbgLocalCount">本地筆數：—</span><br>
         <span id="dbgCloudCount">雲端筆數：—</span><br>
         <span id="dbgLastSync">最後同步：—</span><br>
@@ -860,20 +872,32 @@ function parseCSV(text){
   return lines;
 }
 
-/* ===== 雲端同步（Supabase 直接存取，無需 PAT）===== */
+/* ===== 雲端同步（Supabase Auth + RLS）===== */
 const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
-const DEVICE_ID_KEY = 'reef_device_id';
+
+// 初始化 Supabase Client（支援 Auth）
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
+
 const AUTO_KEY = 'reef_sync_auto';
 const STATUS_KEY = 'reef_sync_status';
 
-function getDeviceId() {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
+// 取得當前用戶
+async function getCurrentUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+// 取得當前 session（含 access_token）
+async function getSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session;
 }
 
 function setStatus(txt, ok) {
@@ -882,11 +906,15 @@ function setStatus(txt, ok) {
   localStorage.setItem(STATUS_KEY, JSON.stringify({txt, ok}));
 }
 
+// 使用用戶的 access_token 發請求（RLS 會自動過濾 user_id）
 async function sbRequest(path, options = {}) {
+  const session = await getSession();
+  if (!session) throw new Error('未登入，請先登入');
+  
   const url = SUPABASE_URL + '/rest/v1' + path;
   const headers = {
     'apikey': SUPABASE_ANON_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + session.access_token,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation',
     ...(options.headers || {})
@@ -899,16 +927,15 @@ async function sbRequest(path, options = {}) {
   return r.json();
 }
 
+// 載入當前用戶的所有記錄
 async function sbLoadAll() {
-  const deviceId = getDeviceId();
-  const data = await sbRequest('/reef_log?device_id=eq.' + deviceId + '&order=created_at.desc&limit=2000');
+  const data = await sbRequest('/reef_log?order=created_at.desc&limit=2000');
   return data || [];
 }
 
+// 新增/更新記錄（不需指定 user_id，RLS 會自動帶入 auth.uid()）
 async function sbUpsert(record) {
-  const deviceId = getDeviceId();
   const payload = {
-    device_id: deviceId,
     data: record,
     updated_at: new Date().toISOString()
   };
@@ -929,9 +956,9 @@ async function sbUpsert(record) {
   }
 }
 
+// 刪除記錄
 async function sbDelete(id) {
-  const deviceId = getDeviceId();
-  await sbRequest('/reef_log?id=eq.' + id + '&device_id=eq.' + deviceId, { method: 'DELETE' });
+  await sbRequest('/reef_log?id=eq.' + id, { method: 'DELETE' });
 }
 
 async function doSync() {
@@ -998,7 +1025,8 @@ async function testConnection() {
   setStatus('🔄 測試中…', null);
   try {
     await sbLoadAll();
-    setStatus('✅ 連線成功，裝置 ID：' + getDeviceId().slice(0, 12) + '…', true);
+    const user = await getCurrentUser();
+    setStatus('✅ 連線成功，用戶：' + (user?.email || user?.id?.slice(0, 12) + '…'), true);
   } catch (e) {
     setStatus('❌ ' + e.message, false);
   }
@@ -1015,8 +1043,6 @@ function stopAutoSync() { }
 (function initSyncUI() {
   const nowBtn = document.getElementById('syncNowBtn'); if (nowBtn) nowBtn.onclick = doSync;
   const testBtn = document.getElementById('syncTestBtn'); if (testBtn) testBtn.onclick = testConnection;
-  const copyBtn = document.getElementById('copyDeviceIdBtn'); if (copyBtn) copyBtn.onclick = () => { navigator.clipboard.writeText(getDeviceId()).then(() => setStatus('✅ 裝置 ID 已複製：' + getDeviceId(), true)); };
-  const pasteBtn = document.getElementById('pasteDeviceIdBtn'); if (pasteBtn) pasteBtn.onclick = async () => { const txt = await navigator.clipboard.readText(); if (txt && txt.startsWith('dev_')) { localStorage.setItem(DEVICE_ID_KEY, txt.trim()); setStatus('✅ 已套用新裝置 ID：' + txt.trim(), true); doSyncSafe(); } else { setStatus('❌ 剪貼簿無有效裝置 ID', false); } };
   const autoBtn = document.getElementById('autoSyncBtn');
   function refreshAuto() { if (!autoBtn) return; const on = localStorage.getItem(AUTO_KEY) === '1'; autoBtn.textContent = '自動同步：' + (on ? '開' : '關'); autoBtn.classList.toggle('on', on); }
   if (autoBtn) autoBtn.onclick = () => { const on = localStorage.getItem(AUTO_KEY) === '1'; localStorage.setItem(AUTO_KEY, on ? '0' : '1'); refreshAuto(); };
@@ -1024,8 +1050,6 @@ function stopAutoSync() { }
   refreshAuto();
   const last = JSON.parse(localStorage.getItem(STATUS_KEY) || 'null'); if (last && last.txt) setStatus(last.txt, last.ok);
   if (localStorage.getItem(AUTO_KEY) === '1') doSyncSafe();
-  // 啟動時自動載入雲端資料（以資料庫為準）
-  doSyncSafe();
 })();
 
 // 除錯面板功能
@@ -1039,8 +1063,8 @@ function dbgLog(msg) {
 }
 
 async function refreshDebugPanel() {
-  const deviceId = getDeviceId();
-  document.getElementById('dbgDeviceId').textContent = '裝置 ID：' + deviceId;
+  const user = await getCurrentUser();
+  document.getElementById('dbgDeviceId').textContent = '用戶：' + (user?.email || user?.id?.slice(0, 12) + '…') || '未登入';
   
   const localLog = load();
   document.getElementById('dbgLocalCount').textContent = '本地筆數：' + localLog.length;
@@ -1100,12 +1124,11 @@ document.getElementById('dbgTestDbBtn').onclick = async () => {
   dbgLog('🔬 測試資料庫連線…');
   try {
     // 1. 測試 SELECT
-    const testData = await sbRequest('/reef_log?device_id=eq.' + getDeviceId() + '&limit=1');
+    const testData = await sbRequest('/reef_log?limit=1');
     dbgLog('SELECT 測試：' + testData.length + ' 筆');
     
     // 2. 測試 INSERT
     const testRecord = {
-      device_id: getDeviceId(),
       data: { d: 'TEST', test: true, id: 'test_' + Date.now() },
       updated_at: new Date().toISOString()
     };
@@ -1124,7 +1147,84 @@ document.getElementById('dbgTestDbBtn').onclick = async () => {
 };
 
 // 初始化除錯面板
-refreshDebugPanel();
+// PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW 註冊失敗', e));
+  });
+}
+
+// ===== Auth 事件處理 =====
+
+// 檢查登入狀態並更新 UI
+async function checkAuthState() {
+  const user = await getCurrentUser();
+  const loginForm = document.getElementById('loginForm');
+  const userInfo = document.getElementById('userInfo');
+  const authLoading = document.getElementById('authLoading');
+  const userEmail = document.getElementById('userEmail');
+  const btnSignOut = document.getElementById('btnSignOut');
+  const btnMagicLink = document.getElementById('btnMagicLink');
+  const btnSignUp = document.getElementById('btnSignUp');
+  const authEmail = document.getElementById('authEmail');
+
+  if (authLoading) authLoading.style.display = 'none';
+
+  if (user) {
+    // 已登入
+    if (loginForm) loginForm.style.display = 'none';
+    if (userInfo) userInfo.style.display = 'flex';
+    if (userEmail) userEmail.textContent = user.email || user.id?.slice(0, 12) + '…';
+    // 綁定登出
+    const btnSignOut = document.getElementById('btnSignOut');
+    if (btnSignOut) {
+      btnSignOut.onclick = async () => {
+        await supabase.auth.signOut();
+        location.reload();
+      };
+    }
+    // 登入後自動同步
+    doSyncSafe();
+    // 更新除錯面板
+    refreshDebugPanel();
+  } else {
+    // 未登入
+    if (loginForm) loginForm.style.display = 'block';
+    if (userInfo) userInfo.style.display = 'none';
+    // 綁定登入按鈕
+    const btnMagicLink = document.getElementById('btnMagicLink');
+    const btnSignUp = document.getElementById('btnSignUp');
+    const authEmail = document.getElementById('authEmail');
+    if (btnMagicLink) {
+      btnMagicLink.onclick = async () => {
+        const email = authEmail?.value?.trim();
+        if (!email) { alert('請輸入 Email'); return; }
+        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+        if (error) { alert('發送失敗：' + error.message); }
+        else { alert('魔法連結已發送至 ' + email + '，請檢查郵件'); }
+      };
+    }
+    if (btnSignUp) {
+      btnSignUp.onclick = async () => {
+        const email = authEmail?.value?.trim();
+        if (!email) { alert('請輸入 Email'); return; }
+        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+        if (error) { alert('發送失敗：' + error.message); }
+        else { alert('驗證郵件已發送至 ' + email + '，請檢查郵件完成註冊'); }
+      };
+    }
+  }
+}
+
+// 監聽 Auth 狀態變化
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event, session?.user?.email);
+  checkAuthState();
+});
+
+// 初始化檢查
+checkAuthState();
+
 renderLog();
 
 // PWA：註冊 service worker（離線快取 + 可安裝到主畫面）
