@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TAEBDC 抽獎得獎者資料填寫</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      text-align: center;
+      background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .timer {
+      text-align: center;
+      padding: 15px;
+      background: rgba(255,0,0,0.2);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .timer.expired {
+      background: rgba(255,0,0,0.5);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #00d2ff;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1rem;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #00d2ff;
+      box-shadow: 0 0 10px rgba(0,210,255,0.3);
+    }
+    .required { color: #ff5fa2; }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .btn:hover { transform: scale(1.02); }
+    .btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .hidden { display: none; }
+    .expired-page {
+      text-align: center;
+      padding: 40px;
+    }
+    .expired-page .emoji { font-size: 4rem; margin-bottom: 20px; }
+    .expired-page h2 { color: #ff5fa2; margin-bottom: 15px; }
+    .success-page {
+      text-align: center;
+      padding: 40px;
+    }
+    .success-page .emoji { font-size: 4rem; margin-bottom: 20px; }
+    .success-page h2 { color: #3dffb0; margin-bottom: 15px; }
+    .award-id {
+      background: rgba(0,210,255,0.2);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 倒數計時器 -->
+    <div class="timer" id="timer">
+      ⏰ 剩餘時間：<span id="countdown">計算中...</span>
+    </div>
+
+    <!-- 抽獎編號 -->
+    <div class="award-id" id="awardId">
+      抽獎編號：<span id="awardNumber">載入中...</span>
+    </div>
+
+    <!-- 得獎者資料表單 -->
+    <div id="formPage">
+      <h1>🎉 恭喜得獎！</h1>
+      <p class="subtitle">請填寫以下資料，以便我們寄送獎品</p>
+
+      <form id="claimForm">
+        <div class="form-group">
+          <label>姓名 <span class="required">*</span></label>
+          <input type="text" id="name" required placeholder="請輸入真實姓名" />
+        </div>
+
+        <div class="form-group">
+          <label>電話 <span class="required">*</span></label>
+          <input type="tel" id="phone" required placeholder="09xx-xxx-xxx" />
+        </div>
+
+        <div class="form-group">
+          <label>Email <span class="required">*</span></label>
+          <input type="email" id="email" required placeholder="example@email.com" />
+        </div>
+
+        <div class="form-group">
+          <label>地址 <span class="required">*</span></label>
+          <textarea id="address" required placeholder="請輸入完整收件地址" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>領取方式 <span class="required">*</span></label>
+          <select id="delivery" required>
+            <option value="">請選擇</option>
+            <option value="mail">郵寄到府</option>
+            <option value="pickup">自行取貨</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>備註 (選填)</label>
+          <textarea id="note" placeholder="其他需求或說明" rows="2"></textarea>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">提交資料</button>
+      </form>
+    </div>
+
+    <!-- 過期頁面 -->
+    <div id="expiredPage" class="hidden expired-page">
+      <div class="emoji">⏰</div>
+      <h2>連結已失效</h2>
+      <p>此得獎者資料填寫連結已過期（超過 3 天）</p>
+      <p>如有疑問，請聯繫 TAEBDC 活動小組</p>
+    </div>
+
+    <!-- 成功頁面 -->
+    <div id="successPage" class="hidden success-page">
+      <div class="emoji">🎉</div>
+      <h2>資料已收到！</h2>
+      <p>感謝填寫，我們將盡快為您寄送獎品</p>
+      <p>如有問題，請聯繫 TAEBDC 活動小組</p>
+    </div>
+  </div>
+
+  <script>
+    // ===== 設定 =====
+    const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
+
+    // ===== 取得 URL 參數 =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const awardId = urlParams.get('id') || 'UNKNOWN';
+    const expParam = urlParams.get('exp');
+
+    // ===== 計算過期時間 =====
+    let expireTime;
+    if (expParam) {
+      expireTime = new Date(expParam);
+    } else {
+      // 預設 3 天後過期
+      expireTime = new Date();
+      expireTime.setDate(expireTime.getDate() + 3);
+    }
+
+    // ===== 倒數計時器 =====
+    function updateTimer() {
+      const now = new Date();
+      const diff = expireTime - now;
+
+      if (diff <= 0) {
+        document.getElementById('timer').classList.add('expired');
+        document.getElementById('timer').innerHTML = '⏰ 連結已過期';
+        document.getElementById('formPage').classList.add('hidden');
+        document.getElementById('expiredPage').classList.remove('hidden');
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('countdown').textContent = 
+        `${days}天 ${hours}時 ${mins}分 ${secs}秒`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // ===== 顯示抽獎編號 =====
+    document.getElementById('awardNumber').textContent = awardId;
+
+    // ===== 表單提交 =====
+    document.getElementById('claimForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '提交中...';
+
+      const data = {
+        award_id: awardId,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        delivery: document.getElementById('delivery').value,
+        note: document.getElementById('note').value,
+        submitted_at: new Date().toISOString()
+      };
+
+      try {
+        // 存到 Supabase
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/lottery_claims`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          document.getElementById('formPage').classList.add('hidden');
+          document.getElementById('successPage').classList.remove('hidden');
+        } else {
+          const err = await response.text();
+          alert('提交失敗：' + err);
+          submitBtn.disabled = false;
+          submitBtn.textContent = '提交資料';
+        }
+      } catch (err) {
+        alert('提交失敗：' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = '提交資料';
+      }
+    });
+
+    // ===== 檢查是否過期 =====
+    if (new Date() > expireTime) {
+      document.getElementById('timer').classList.add('expired');
+      document.getElementById('timer').innerHTML = '⏰ 連結已過期';
+      document.getElementById('formPage').classList.add('hidden');
+      document.getElementById('expiredPage').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
+EOF
+echo "Created lottery-claim.html" && ls -la /Users/hpc/github_deploy/lottery-claim.html
