@@ -147,25 +147,9 @@
         </div>
 
         <div class="form-group">
-          <label>地址 <span class="required">*</span></label>
-          <textarea id="address" required placeholder="請輸入完整收件地址" rows="3"></textarea>
+          <label>身分證字號 <span class="required">*</span></label>
+          <input type="text" id="idNumber" required placeholder="A123456789" pattern="[A-Z][1-2][0-9]{8}" />
         </div>
-
-        <div class="form-group">
-          <label>領取方式 <span class="required">*</span></label>
-          <select id="delivery" required>
-            <option value="">請選擇</option>
-            <option value="mail">郵寄到府</option>
-            <option value="pickup">自行取貨</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>備註 (選填)</label>
-          <textarea id="note" placeholder="其他需求或說明" rows="2"></textarea>
-        </div>
-
-        <button type="submit" class="btn" id="submitBtn">提交資料</button>
       </form>
     </div>
 
@@ -247,9 +231,7 @@
         name: document.getElementById('name').value,
         phone: document.getElementById('phone').value,
         email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        delivery: document.getElementById('delivery').value,
-        note: document.getElementById('note').value,
+        id_number: document.getElementById('idNumber').value,
         submitted_at: new Date().toISOString()
       };
 
