@@ -168,14 +168,17 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const awardId = urlParams.get('id') || 'UNKNOWN';
-    const expParam = urlParams.get('exp');
 
+    // 使用 localStorage 記錄第一次打開時間，5 天後過期
+    const storageKey = 'award_exp_' + awardId;
     let expireTime;
-    if (expParam) {
-      expireTime = new Date(expParam);
+    const storedExp = localStorage.getItem(storageKey);
+    if (storedExp) {
+      expireTime = new Date(storedExp);
     } else {
       expireTime = new Date();
       expireTime.setDate(expireTime.getDate() + 5);
+      localStorage.setItem(storageKey, expireTime.toISOString());
     }
 
     function updateTimer() {
