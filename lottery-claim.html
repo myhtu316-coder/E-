@@ -18,7 +18,6 @@
       margin: 0 auto;
       padding: 30px;
       background: #f8f9fa;
-      backdrop-filter: blur(10px);
       border-radius: 20px;
       border: 1px solid #ddd;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -60,7 +59,7 @@
       font-weight: 600;
       color: #007bff;
     }
-    input, select, textarea {
+    input {
       width: 100%;
       padding: 12px;
       border: 1px solid #ccc;
@@ -69,7 +68,7 @@
       color: #333;
       font-size: 1rem;
     }
-    input:focus, select:focus, textarea:focus {
+    input:focus {
       outline: none;
       border-color: #007bff;
       box-shadow: 0 0 10px rgba(0,123,255,0.3);
@@ -94,26 +93,13 @@
       transform: none;
     }
     .hidden { display: none; }
-    .expired-page {
+    .expired-page, .success-page {
       text-align: center;
       padding: 40px;
     }
-    .expired-page .emoji { font-size: 4rem; margin-bottom: 20px; }
-    .expired-page h2 { color: #ff5fa2; margin-bottom: 15px; }
-    .success-page {
-      text-align: center;
-      padding: 40px;
-    }
-    .success-page .emoji { font-size: 4rem; margin-bottom: 20px; }
-    .success-page h2 { color: #3dffb0; margin-bottom: 15px; }
-    .award-id {
-      background: rgba(0,210,255,0.2);
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
+    .expired-page .emoji, .success-page .emoji { font-size: 4rem; margin-bottom: 20px; }
+    .expired-page h2 { color: #dc3545; margin-bottom: 15px; }
+    .success-page h2 { color: #28a745; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -121,11 +107,6 @@
     <!-- 倒數計時器 -->
     <div class="timer" id="timer">
       ⏰ 剩餘時間：<span id="countdown">計算中...</span>
-    </div>
-
-    <!-- 抽獎編號 (隱藏) -->
-    <div class="hidden" id="awardId">
-      抽獎編號：<span id="awardNumber">載入中...</span>
     </div>
 
     <!-- 得獎者資料表單 -->
@@ -154,6 +135,8 @@
           <label>身分證字號 <span class="required">*</span></label>
           <input type="text" id="idNumber" required placeholder="A123456789" pattern="[A-Z][1-2][0-9]{8}" />
         </div>
+
+        <button type="submit" class="btn" id="submitBtn">提交資料</button>
       </form>
     </div>
 
@@ -169,32 +152,27 @@
     <div id="successPage" class="hidden success-page">
       <div class="emoji">🎉</div>
       <h2>資料已收到！</h2>
-      <p>感謝填寫，我們將盡快為您寄送獎品</p>
+      <p>感謝填寫，我們將統計領獎人數</p>
       <p>如有問題，請聯繫 TAEBDC 活動小組</p>
     </div>
   </div>
 
   <script>
-    // ===== 設定 =====
     const SUPABASE_URL = 'https://bsuyhgbmdsozqsrmwbif.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzdXloZ2JtZHNvenFzcm13YmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Njc4OTEsImV4cCI6MjEwODA0Mzg5MX0.mu7PjnHsVO8GxGIKd1q1GBmz1Pvu2xzPq1a8dSz2mr8';
 
-    // ===== 取得 URL 參數 =====
     const urlParams = new URLSearchParams(window.location.search);
     const awardId = urlParams.get('id') || 'UNKNOWN';
     const expParam = urlParams.get('exp');
 
-    // ===== 計算過期時間 =====
     let expireTime;
     if (expParam) {
       expireTime = new Date(expParam);
     } else {
-      // 預設 3 天後過期
       expireTime = new Date();
       expireTime.setDate(expireTime.getDate() + 3);
     }
 
-    // ===== 倒數計時器 =====
     function updateTimer() {
       const now = new Date();
       const diff = expireTime - now;
@@ -219,10 +197,6 @@
     setInterval(updateTimer, 1000);
     updateTimer();
 
-    // ===== 顯示抽獎編號 =====
-    document.getElementById('awardNumber').textContent = awardId;
-
-    // ===== 表單提交 =====
     document.getElementById('claimForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -240,7 +214,6 @@
       };
 
       try {
-        // 存到 Supabase
         const response = await fetch(`${SUPABASE_URL}/rest/v1/lottery_claims`, {
           method: 'POST',
           headers: {
@@ -268,7 +241,6 @@
       }
     });
 
-    // ===== 檢查是否過期 =====
     if (new Date() > expireTime) {
       document.getElementById('timer').classList.add('expired');
       document.getElementById('timer').innerHTML = '⏰ 連結已過期';
@@ -278,3 +250,5 @@
   </script>
 </body>
 </html>
+EOF
+echo "File recreated successfully"
