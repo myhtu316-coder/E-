@@ -117,16 +117,6 @@
 
       <form id="claimForm">
         <div class="form-group">
-          <label>姓名 <span class="required">*</span></label>
-          <input type="text" id="name" required placeholder="請輸入真實姓名" />
-        </div>
-
-        <div class="form-group">
-          <label>電話 <span class="required">*</span></label>
-          <input type="tel" id="phone" required placeholder="09xx-xxx-xxx" />
-        </div>
-
-        <div class="form-group">
           <label>身分證字號 <span class="required">*</span></label>
           <input type="text" id="idNumber" required placeholder="A123456789 或 AB12345678" pattern="[A-Z][A-Z0-9][0-9]{8}|[A-Z][1-2][0-9]{8}" title="身分證字號 (A123456789) 或居留證號碼 (AB12345678)" />
         </div>
@@ -214,8 +204,6 @@
 
       const data = {
         award_id: awardId,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
         email: document.getElementById('email').value,
         id_number: document.getElementById('idNumber').value,
         student_id: document.getElementById('school').value,
